@@ -66,6 +66,9 @@ services:
       NOCODB_BASE_ID: ${NOCODB_BASE_ID}
       NOCODB_TABLE_ID: ${NOCODB_TABLE_ID}
       PDF_SERVICE_URL: http://pdf-service:3001
+      RESEND_API_KEY: ${RESEND_API_KEY}
+      RESEND_FROM: ${RESEND_FROM}
+      N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
 
     entrypoint: ["/bin/sh", "-c"]
     command: >
@@ -74,7 +77,7 @@ services:
       for f in /data/n8n/*.json; do
         n8n import:workflow --input=$$f || true;
       done &&
-      n8n update:workflow --id=550e8400-e29b-41d4-a716-446655440001 --active=true || true &&
+      node /usr/local/bin/activate-workflows.js || true &&
       n8n start"
     volumes:
       - n8n_data:/home/node/.n8n

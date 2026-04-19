@@ -16,10 +16,29 @@ const MID   = rgb(0.25, 0.25, 0.25);
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
+/** Replace characters not supported by WinAnsi (used by pdf-lib standard fonts). */
+function sanitize(text) {
+  if (!text) return '';
+  return String(text)
+    .replace(/→/g, '->')
+    .replace(/←/g, '<-')
+    .replace(/↑/g, '^')
+    .replace(/↓/g, 'v')
+    .replace(/–/g, '-')
+    .replace(/—/g, '-')
+    .replace(/'/g, "'")
+    .replace(/'/g, "'")
+    .replace(/"/g, '"')
+    .replace(/"/g, '"')
+    .replace(/…/g, '...')
+    .replace(/•/g, '*')
+    .replace(/[^\x00-\xFF]/g, '?');
+}
+
 /** Split text into lines that fit maxWidth at given fontSize. */
 function wrapText(text, font, fontSize, maxWidth) {
   if (!text) return [];
-  const words = String(text).split(/\s+/).filter(Boolean);
+  const words = sanitize(String(text)).split(/\s+/).filter(Boolean);
   const lines = [];
   let line = '';
   for (const word of words) {
@@ -41,7 +60,7 @@ function wrapText(text, font, fontSize, maxWidth) {
  */
 function drawWrapped(page, text, font, size, x, y, maxWidth, lineGap, color) {
   if (!text) return y;
-  const lines = wrapText(String(text), font, size, maxWidth);
+  const lines = wrapText(sanitize(String(text)), font, size, maxWidth);
   for (const ln of lines) {
     page.drawText(ln, { x, y, font, size, color: color || DARK });
     y -= size + lineGap;
@@ -141,7 +160,7 @@ function overlayPage1(pdfDoc, page, { name, calendarUrl, bold }) {
     displayName = displayName.slice(0, -1);
   }
 
-  page.drawText(displayName, {
+  page.drawText(sanitize(displayName), {
     x: 144,
     y: toY(298),          // baseline ≈ bottom of text bounding box
     font: bold,
@@ -178,7 +197,7 @@ function overlayPage2(page, { profile, regular }) {
   ];
   for (const { x, y, value } of entries) {
     if (value) {
-      page.drawText(String(value), { x, y, font: regular, size: sz, color: DARK });
+      page.drawText(sanitize(String(value)), { x, y, font: regular, size: sz, color: DARK });
     }
   }
 }
@@ -243,7 +262,7 @@ async function overlayExerciseRow(pdfDoc, page, exercise, rowTop, { bold, regula
 
   // Name (bold) – baseline at bottom of row top bounding box
   const nameY = toY(rowTop + 14 + nameSize);  // 14pt top padding
-  page.drawText(String(exercise.name || ''), {
+  page.drawText(sanitize(String(exercise.name || '')), {
     x: col2X, y: nameY, font: bold, size: nameSize, color: DARK,
   });
 

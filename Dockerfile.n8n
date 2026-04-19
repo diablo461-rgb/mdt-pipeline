@@ -2,3 +2,38 @@ FROM n8nio/n8n:latest
 
 # The n8n base image already includes pg in its node_modules.
 # Custom Function nodes can use require('pg') when allowed by environment.
+
+# Script to activate workflows directly in n8n_db after import (which always deactivates)
+USER root
+RUN printf '%s\n' \
+  "const { Client } = require('/usr/local/lib/node_modules/n8n/node_modules/pg');" \
+  "const c = new Client({" \
+  "  host: 'postgres'," \
+  "  user: process.env.POSTGRES_USER," \
+  "  password: process.env.POSTGRES_PASSWORD," \
+  "  database: 'n8n_db'," \
+  "});" \
+  "const IDS = [" \
+  "  '550e8400-e29b-41d4-a716-446655440001'," \
+  "  '660e8400-e29b-41d4-a716-446655440002'," \
+  "];" \
+  "async function run() {" \
+  "  await c.connect();" \
+  "  await c.query('UPDATE workflow_entity SET active = true WHERE id = ANY(\$1)', [IDS]);" \
+  "  const hist = await c.query(" \
+  "    'SELECT DISTINCT ON (\"workflowId\") \"workflowId\", \"versionId\" FROM workflow_history WHERE \"workflowId\" = ANY(\$1) ORDER BY \"workflowId\", \"createdAt\" DESC'," \
+  "    [IDS]" \
+  "  );" \
+  "  for (const row of hist.rows) {" \
+  "    await c.query(" \
+  "      'INSERT INTO workflow_published_version (\"workflowId\", \"publishedVersionId\", \"createdAt\", \"updatedAt\") VALUES (\$1, \$2, NOW(), NOW()) ON CONFLICT (\"workflowId\") DO UPDATE SET \"publishedVersionId\" = EXCLUDED.\"publishedVersionId\", \"updatedAt\" = NOW()'," \
+  "      [row.workflowId, row.versionId]" \
+  "    );" \
+  "    console.log('[activate] published ' + row.workflowId + ' @ ' + row.versionId);" \
+  "  }" \
+  "  await c.end();" \
+  "  console.log('[activate] done');" \
+  "}" \
+  "run().catch(e => { console.error('[activate] error:', e.message); process.exit(0); });" \
+  > /usr/local/bin/activate-workflows.js
+USER node

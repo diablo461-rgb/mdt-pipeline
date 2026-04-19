@@ -36,7 +36,7 @@
     {
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const payload = items[0].json;\nconst lead    = payload.lead || {};\n\nconst GOAL_MAP = {\n  'Energize & Refocus':      'energy',\n  'De-Stress & Reset':       'destress',\n  'Posture & Mobility Flow': 'posture',\n  'Stay Fit & Active':       'active',\n  'Core & Balance':          'core',\n};\nconst SPACE_MAP = {\n  'Indoor':             'indoor',\n  'Outdoors':           'outdoors',\n  'Mixed environment':  'mixed',\n  'Mixed':              'mixed',\n  'Indoors (hotel room, Airbnb, apartment)': 'indoor',\n};\nconst EQUIP_MAP = {\n  'Bodyweight only':             'none',\n  'Bodyweight + everyday items': 'everyday_items',\n  'Bodyweight + Everyday Items': 'everyday_items',\n};\nconst LEVEL_MAP = {\n  'Beginner':     'beginner',\n  'Intermediate': 'intermediate',\n  'Advanced':     'advanced',\n  'Intermediate (active, but inconsistent)': 'intermediate',\n  'Beginner (just starting out)':            'beginner',\n  'Advanced (very consistent)':              'advanced',\n};\nconst CONTRA_MAP = {\n  'Low Back':               'low_back_pain',\n  'Low back sensitivity':   'low_back_pain',\n  'Knees':                  'knee_pain',\n  'Knee sensitivity':       'knee_pain',\n  'Shoulders':              'shoulders_pain',\n  'Shoulders sensitivity':  'shoulders_pain',\n  'High Stress':            'stress',\n  'High Stress / fatigue':  'stress',\n  'None, feeling good':      null,\n  'None':                    null,\n};\nconst SLEEP_MAP = {\n  'Less than 5 hours': 'very_low',\n  'Under 5 hours':     'very_low',\n  '5 hours':           'very_low',\n  '6-7 hours':         'normal',\n  '6\\u20137 hours':    'normal',\n  '8+ hours':          'high',\n  '8 or more':         'high',\n};\nconst MOVEMENT_MAP = {\n  'Cardio':                                        'cardio',\n  'Resistance':                                    'resistance',\n  'Resistance / strength (weights, bodyweights)': 'resistance',\n  'Yoga / Pilates':                                'mobility',\n  'Yoga/Pilates':                                  'mobility',\n  'Mixed':                                         'mix',\n  'Balanced routine':                              'mix',\n  'Cardio-based':                                  'cardio',\n  'Resistance / strength':                         'resistance',\n};\nconst CYCLE_MAP = {\n  'Menstrual phase':  'menstrual',\n  'Follicular phase': 'follicular',\n  'Ovulatory phase':  'ovulatory',\n  'Luteal phase':     'luteal',\n  'Not applicable':   'none',\n};\n\nconst rawAreas = Array.isArray(lead.mindfulAreas)\n  ? lead.mindfulAreas\n  : lead.mindfulAreas\n    ? [lead.mindfulAreas]\n    : [];\n\nconst user_profile = {\n  primary_goal:      GOAL_MAP[lead.focus]                   || lead.focus                                      || null,\n  space:             SPACE_MAP[lead.trainingEnvironment]    || (lead.trainingEnvironment   || '').toLowerCase() || null,\n  equipment:         EQUIP_MAP[lead.trainingImplementation] || (lead.trainingImplementation || '').toLowerCase() || null,\n  level:             LEVEL_MAP[lead.activityLevel]          || (lead.activityLevel         || '').toLowerCase() || 'beginner',\n  movement_type:     MOVEMENT_MAP[lead.activityType]        || (lead.activityType          || '').toLowerCase() || null,\n  sleep_bucket:      SLEEP_MAP[lead.sleepAmount]            || 'normal',\n  sex:               (lead.gender || '').toLowerCase()      || 'undisclosed',\n  cycle_phase:       CYCLE_MAP[lead.cyclePhase]             || 'none',\n  contraindications: rawAreas.map(a => CONTRA_MAP[a] ?? null).filter(Boolean),\n  lifestyle:         (lead.travelLifestyle || '').toLowerCase().replace(/\\s+/g, '_') || null,\n  age_group:         (lead.ageGroup        || '').toLowerCase().replace(/\\s+/g, '_') || null,\n};\n\nreturn [{\n  json: {\n    name:          lead.name  || 'Unknown',\n    email:         lead.email || 'unknown@example.com',\n    status:        'new',\n    tally_payload: JSON.stringify(payload),\n    user_profile:  JSON.stringify(user_profile),\n  }\n}];"
+        "jsCode": "const payload = items[0].json;\nconst lead    = payload.lead || {};\n\nconst GOAL_MAP = {\n  'Energize & Refocus':      'energy',\n  'De-Stress & Reset':       'destress',\n  'Posture & Mobility Flow': 'posture',\n  'Stay Fit & Active':       'active',\n  'Core & Balance':          'core',\n  'Energize / refocus (mornings, post-flight fatigue)': 'energy',\n  'De-Stress / reset (calm, unwind after long days)':   'destress',\n  'Posture / mobility (counter long hours of sitting)': 'posture',\n  'Stay fit / active (keep strength and movement)':     'active',\n  'Core / balance (control and coordination)':          'core',\n};\nconst SPACE_MAP = {\n  'Indoor':             'indoor',\n  'Outdoors':           'outdoors',\n  'Mixed environment':  'mixed',\n  'Mixed':              'mixed',\n  'Indoors (hotel room, Airbnb, apartment)': 'indoor',\n  'Outdoors (park, beach, rooftop, terrace)': 'outdoors',\n  'Mixed environments (varies day to day)': 'mixed',\n};\nconst EQUIP_MAP = {\n  'Bodyweight only':             'none',\n  'Bodyweight + everyday items': 'everyday_items',\n  'Bodyweight + Everyday Items': 'everyday_items',\n  'Bodyweight + items (backpack, bottles of water)': 'everyday_items',\n};\nconst LEVEL_MAP = {\n  'Beginner':     'beginner',\n  'Intermediate': 'intermediate',\n  'Advanced':     'advanced',\n  'Intermediate (active, but inconsistent)': 'intermediate',\n  'Beginner (just starting out)':            'beginner',\n  'Beginner (new, returning to exercise)':   'beginner',\n  'Advanced (very consistent)':              'advanced',\n  'Advanced (comfortable with higher intensity)': 'advanced',\n};\nconst CONTRA_MAP = {\n  'Low Back':               'low_back_pain',\n  'Low back sensitivity':   'low_back_pain',\n  'Knees':                  'knee_pain',\n  'Knee sensitivity':       'knee_pain',\n  'Shoulders':              'shoulders_pain',\n  'Shoulders sensitivity':  'shoulders_pain',\n  'High Stress':            'stress',\n  'High Stress / fatigue':  'stress',\n  'High stress / feeling fatigued': 'stress',\n  'None, feeling good':      null,\n  'None, I\\'m feeling good': null,\n  'None':                    null,\n};\nconst SLEEP_MAP = {\n  'Less than 5 hours': 'very_low',\n  'Under 5 hours':     'very_low',\n  '5 hours':           'very_low',\n  '6-7 hours':         'normal',\n  '6\\u20137 hours':    'normal',\n  'More than 8 hours': 'high',\n  '8+ hours':          'high',\n  '8 or more':         'high',\n};\nconst MOVEMENT_MAP = {\n  'Cardio':                                        'cardio',\n  'Resistance':                                    'resistance',\n  'Resistance / strength (weights, bodyweights)': 'resistance',\n  'Yoga / Pilates':                                'mobility',\n  'Yoga/Pilates':                                  'mobility',\n  'Yoga / pilates / dance':                        'mobility',\n  'Mixed':                                         'mix',\n  'Balanced routine':                              'mix',\n  'Balanced mix':                                  'mix',\n  'Cardio-based':                                  'cardio',\n  'Cardio-based (running, cycling, swimming)':     'cardio',\n  'Resistance / strength':                         'resistance',\n};\nconst CYCLE_MAP = {\n  'Menstrual phase':  'menstrual',\n  'Follicular phase': 'follicular',\n  'Ovulatory phase':  'ovulatory',\n  'Luteal phase':     'luteal',\n  'Not applicable':   'none',\n  'Not sure / Prefer not to say / Skip': 'none',\n};\n\nconst rawAreas = Array.isArray(lead.mindfulAreas)\n  ? lead.mindfulAreas\n  : lead.mindfulAreas\n    ? [lead.mindfulAreas]\n    : [];\n\nconst user_profile = {\n  primary_goal:      GOAL_MAP[lead.focus]                   || lead.focus                                      || null,\n  space:             SPACE_MAP[lead.trainingEnvironment]    || (lead.trainingEnvironment   || '').toLowerCase() || null,\n  equipment:         EQUIP_MAP[lead.trainingImplementation] || (lead.trainingImplementation || '').toLowerCase() || null,\n  level:             LEVEL_MAP[lead.activityLevel]          || (lead.activityLevel         || '').toLowerCase() || 'beginner',\n  movement_type:     MOVEMENT_MAP[lead.activityType]        || (lead.activityType          || '').toLowerCase() || null,\n  sleep_bucket:      SLEEP_MAP[lead.sleepAmount]            || 'normal',\n  sex:               (lead.gender || '').toLowerCase()      || 'undisclosed',\n  cycle_phase:       CYCLE_MAP[lead.cyclePhase]             || 'none',\n  contraindications: rawAreas.map(a => CONTRA_MAP[a] ?? null).filter(Boolean),\n  lifestyle:         (lead.travelLifestyle || '').toLowerCase().replace(/\\s+/g, '_') || null,\n  age_group:         (lead.ageGroup        || '').toLowerCase().replace(/\\s+/g, '_') || null,\n};\n\nreturn [{\n  json: {\n    name:          lead.name  || 'Unknown',\n    email:         lead.email || 'unknown@example.com',\n    status:        'new',\n    tally_payload: JSON.stringify(payload),\n    user_profile:  JSON.stringify(user_profile),\n  }\n}];"
       },
       "name": "Build DB Record",
       "type": "n8n-nodes-base.code",
@@ -215,7 +215,7 @@
     {
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "// Get user profile\nconst buildRecord = $('Build DB Record').first().json;\nconst profile = JSON.parse(buildRecord.user_profile);\nconst email = buildRecord.email;\n\n// Movement type normalization (NocoDB: 'strength', quiz maps to: 'resistance')\nconst mvTypeNorm = {\n  resistance: 'strength',\n  'resistance / strength': 'strength',\n  'balanced routine': 'mix',\n  mix: 'mix',\n  'cardio-based': 'cardio',\n  'yoga / pilates': 'mobility',\n  'yoga / pilates / dance': 'mobility',\n  'yoga/pilates': 'mobility',\n};\nconst userMovType = mvTypeNorm[profile.movement_type] || profile.movement_type;\n\n// Space filter values from quiz mapping\nconst spaceMap = {\n  indoor:   ['close_space', 'all'],\n  outdoors: ['outdoors', 'open_space', 'all'],\n  mixed:    ['close_space', 'outdoors', 'open_space', 'all']\n};\nconst allowedSpaces = spaceMap[profile.space] || ['all'];\n\n// Equipment filter values\nconst equipMap = {\n  none:           ['none'],\n  everyday_items: ['none', 'everyday_items', 'backpack']\n};\nconst allowedEquip = equipMap[profile.equipment] || ['none'];\n\n// Level progression by week (4 weeks)\nconst levelProgress = {\n  beginner:     [['beginner'], ['beginner'], ['beginner'], ['beginner']],\n  intermediate: [['beginner'], ['beginner', 'intermediate'], ['intermediate'], ['intermediate', 'advanced']],\n  advanced:     [['intermediate'], ['intermediate', 'advanced'], ['advanced'], ['advanced']]\n};\nconst weekLevels = levelProgress[profile.level] || levelProgress.beginner;\n\n// Contraindication pain keywords\nconst contraPainKeywords = (profile.contraindications || [])\n  .filter(c => c !== 'stress')\n  .map(c => {\n    if (c === 'low_back_pain') return 'low back';\n    if (c === 'knee_pain') return 'knee';\n    if (c === 'shoulders_pain') return 'shoulders';\n    return c.replace(/_/g, ' ');\n  });\n\n// Intensity exclusion rule\nconst excludeHighIntensity =\n  (profile.contraindications || []).includes('stress') ||\n  profile.sleep_bucket === 'very_low' ||\n  (profile.sex === 'female' && ['menstrual', 'luteal'].includes(profile.cycle_phase));\n\n// Load all exercises from 4 paged requests\nconst allExercises = [\n  ...($('Fetch Exercises p1').first().json.list || []),\n  ...($('Fetch Exercises p2').first().json.list || []),\n  ...($('Fetch Exercises p3').first().json.list || []),\n  ...($('Fetch Exercises p4').first().json.list || [])\n];\n\n// Check exercise against user contraindications\nfunction matchesContra(ex) {\n  if (contraPainKeywords.length === 0) return true;\n  if (!ex.contraindications) return true;\n  const exContra = ex.contraindications.toLowerCase();\n  return !contraPainKeywords.some(k => exContra.includes(k));\n}\n\n// Filter warmup pool\nfunction getWarmupPool() {\n  return allExercises.filter(ex => {\n    if (ex.primary_goal !== 'warmup') return false;\n    if (!allowedSpaces.includes(ex.space)) return false;\n    if (!allowedEquip.includes(ex.equipment)) return false;\n    if (!matchesContra(ex)) return false;\n    if (excludeHighIntensity && ex.intensity === 'high') return false;\n    return true;\n  });\n}\n\n// Filter main pool for a specific goal and week level\n// movement_type is a soft filter: if result < minCount, fall back to all types\nfunction getMainPool(goal, weekLevel, minCount = 4) {\n  function baseFilter(ex) {\n    if (ex.primary_goal !== goal) return false;\n    if (!allowedSpaces.includes(ex.space)) return false;\n    if (!allowedEquip.includes(ex.equipment)) return false;\n    if (!weekLevel.includes(ex.level)) return false;\n    if (!matchesContra(ex)) return false;\n    if (excludeHighIntensity && ex.intensity === 'high') return false;\n    return true;\n  }\n  // Try with movement_type filter first\n  if (userMovType && userMovType !== 'mix') {\n    const withType = allExercises.filter(ex => {\n      if (!baseFilter(ex)) return false;\n      const exTypes = (ex.movement_type || '').split(',').map(s => s.trim());\n      return exTypes.includes(userMovType);\n    });\n    if (withType.length >= minCount) return withType;\n  }\n  // Soft fallback: ignore movement_type if pool too small\n  return allExercises.filter(baseFilter);\n}\n\n// Fallback goal groups (per spec)\nconst fallbackMap = {\n  energy:  ['energy', 'active'],\n  active:  ['active', 'energy'],\n  destress: ['destress', 'posture', 'core'],\n  posture:  ['posture', 'destress', 'core'],\n  core:     ['core', 'destress', 'posture']\n};\nconst goalFallbacks = fallbackMap[profile.primary_goal] || [profile.primary_goal];\n\n// Body focus slot rules per goal (sessions: morning, midday, afternoon, evening)\nconst slotBodyFocus = {\n  energy:  [['full_body'], ['upper_body', 'full_body'], ['full_body'], ['full_body']],\n  destress:[['full_body'], ['upper_body', 'full_body'], ['full_body'], ['full_body']],\n  posture: [['full_body'], ['lower_body', 'full_body'], ['upper_body', 'full_body'], ['full_body']],\n  active:  [['lower_body', 'full_body'], ['upper_body', 'full_body'], ['full_body'], ['full_body']],\n  core:    [['full_body'], ['lower_body', 'full_body'], ['full_body'], ['full_body']]\n};\nconst bodyFocusRules = slotBodyFocus[profile.primary_goal]\n  || [['full_body'], ['full_body'], ['full_body'], ['full_body']];\n\nconst sessions = ['morning', 'midday', 'afternoon', 'evening'];\n\nfunction pickRandom(arr) {\n  if (!arr || arr.length === 0) return null;\n  return arr[Math.floor(Math.random() * arr.length)];\n}\n\n// Build 4-week plan\nconst globalUsedMainIds = new Set(); // anti-repetition across weeks\nconst warmupPool = getWarmupPool();\nconst plan = {};\n\nfor (let w = 0; w < 4; w++) {\n  const weekNum = w + 1;\n  const weekLevel = weekLevels[w];\n\n  // Build main pool with goal fallback\n  let mainPool = [];\n  for (const goal of goalFallbacks) {\n    const pool = getMainPool(goal, weekLevel);\n    const fresh = pool.filter(e => !mainPool.find(m => m.ex_id === e.ex_id));\n    mainPool = [...mainPool, ...fresh];\n    if (mainPool.length >= 4) break;\n  }\n\n  // Prefer exercises not used in previous weeks\n  const freshMain = mainPool.filter(e => !globalUsedMainIds.has(e.ex_id));\n  const effectiveMain = freshMain.length >= 4 ? freshMain : mainPool;\n\n  const weekUsedWarmupIds = new Set();\n  const weekUsedMainIds = new Set();\n  const weekPlan = {};\n\n  for (let s = 0; s < 4; s++) {\n    // Warmup: unique within week, repeats between weeks allowed\n    const warmupCandidates = warmupPool.filter(e => !weekUsedWarmupIds.has(e.ex_id));\n    const wu = pickRandom(warmupCandidates.length > 0 ? warmupCandidates : warmupPool);\n    if (wu) weekUsedWarmupIds.add(wu.ex_id);\n\n    // Main: match body_focus slot rule, fallback to any unused, then any\n    const slotFocus = bodyFocusRules[s];\n    let mainCandidates = effectiveMain.filter(e =>\n      !weekUsedMainIds.has(e.ex_id) && slotFocus.includes(e.body_focus)\n    );\n    if (mainCandidates.length === 0) {\n      mainCandidates = effectiveMain.filter(e => !weekUsedMainIds.has(e.ex_id));\n    }\n    if (mainCandidates.length === 0) {\n      mainCandidates = mainPool;\n    }\n    const mx = pickRandom(mainCandidates);\n    if (mx) {\n      weekUsedMainIds.add(mx.ex_id);\n      globalUsedMainIds.add(mx.ex_id);\n    }\n\n    weekPlan[sessions[s]] = {\n      warmup: wu ? {\n        ex_id: wu.ex_id,\n        name: wu.name,\n        body_focus: wu.body_focus,\n        level: wu.level,\n        intensity: wu.intensity,\n        movement_type: wu.movement_type,\n        image_url: wu.image_url,\n        cues: wu.cues\n      } : null,\n      main: mx ? {\n        ex_id: mx.ex_id,\n        name: mx.name,\n        body_focus: mx.body_focus,\n        level: mx.level,\n        intensity: mx.intensity,\n        movement_type: mx.movement_type,\n        primary_goal: mx.primary_goal,\n        image_url: mx.image_url,\n        cues: mx.cues\n      } : null\n    };\n  }\n  plan[`week_${weekNum}`] = weekPlan;\n}\n\nreturn [{ json: { program_plan: plan, email } }];"
+        "jsCode": "// Get user profile\nconst buildRecord = $('Build DB Record').first().json;\nconst profile = JSON.parse(buildRecord.user_profile);\nconst email = buildRecord.email;\n\n// Movement type normalization (NocoDB: 'strength', quiz maps to: 'resistance')\nconst mvTypeNorm = {\n  resistance: 'strength',\n  'resistance / strength': 'strength',\n  'balanced routine': 'mix',\n  mix: 'mix',\n  'cardio-based': 'cardio',\n  'yoga / pilates': 'mobility',\n  'yoga / pilates / dance': 'mobility',\n  'yoga/pilates': 'mobility',\n};\nconst userMovType = mvTypeNorm[profile.movement_type] || profile.movement_type;\n\n// Space filter values from quiz mapping\nconst spaceMap = {\n  indoor:   ['close_space', 'all'],\n  outdoors: ['outdoors', 'open_space', 'all'],\n  mixed:    ['close_space', 'outdoors', 'open_space', 'all']\n};\nconst allowedSpaces = spaceMap[profile.space] || ['all'];\n\n// Equipment filter values\nconst equipMap = {\n  none:           ['none'],\n  everyday_items: ['none', 'everyday_items', 'backpack']\n};\nconst allowedEquip = equipMap[profile.equipment] || ['none'];\n\n// Level progression by week (4 weeks)\nconst levelProgress = {\n  beginner:     [['beginner'], ['beginner'], ['beginner'], ['beginner']],\n  intermediate: [['beginner'], ['beginner', 'intermediate'], ['intermediate'], ['intermediate', 'advanced']],\n  advanced:     [['intermediate'], ['intermediate', 'advanced'], ['advanced'], ['advanced']]\n};\nconst weekLevels = levelProgress[profile.level] || levelProgress.beginner;\n\n// Contraindication pain keywords\nconst contraPainKeywords = (profile.contraindications || [])\n  .filter(c => c !== 'stress')\n  .map(c => {\n    if (c === 'low_back_pain') return 'low back';\n    if (c === 'knee_pain') return 'knee';\n    if (c === 'shoulders_pain') return 'shoulders';\n    return c.replace(/_/g, ' ');\n  });\n\n// Intensity exclusion rule\nconst excludeHighIntensity =\n  (profile.contraindications || []).includes('stress') ||\n  profile.sleep_bucket === 'very_low' ||\n  (profile.sex === 'female' && ['menstrual', 'luteal'].includes(profile.cycle_phase));\n\n// Load all exercises from 4 paged requests\nconst allExercises = [\n  ...($('Fetch Exercises p1').first().json.list || []),\n  ...($('Fetch Exercises p2').first().json.list || []),\n  ...($('Fetch Exercises p3').first().json.list || []),\n  ...($('Fetch Exercises p4').first().json.list || [])\n];\n\n// Check exercise against user contraindications\nfunction matchesContra(ex) {\n  if (contraPainKeywords.length === 0) return true;\n  if (!ex.contraindications) return true;\n  const exContra = ex.contraindications.toLowerCase();\n  return !contraPainKeywords.some(k => exContra.includes(k));\n}\n\n// Filter warmup pool\nfunction getWarmupPool() {\n  return allExercises.filter(ex => {\n    if (ex.primary_goal !== 'warmup') return false;\n    if (!allowedSpaces.includes(ex.space)) return false;\n    if (!allowedEquip.includes(ex.equipment)) return false;\n    if (!matchesContra(ex)) return false;\n    if (excludeHighIntensity && ex.intensity === 'high') return false;\n    return true;\n  });\n}\n\n// Filter main pool for a specific goal and week level\n// movement_type is a soft filter: if result < minCount, fall back to all types\nfunction getMainPool(goal, weekLevel, minCount = 4) {\n  function baseFilter(ex) {\n    if (ex.primary_goal !== goal) return false;\n    if (!allowedSpaces.includes(ex.space)) return false;\n    if (!allowedEquip.includes(ex.equipment)) return false;\n    if (!weekLevel.includes(ex.level)) return false;\n    if (!matchesContra(ex)) return false;\n    if (excludeHighIntensity && ex.intensity === 'high') return false;\n    return true;\n  }\n  // Try with movement_type filter first\n  if (userMovType && userMovType !== 'mix') {\n    const withType = allExercises.filter(ex => {\n      if (!baseFilter(ex)) return false;\n      const exTypes = (ex.movement_type || '').split(',').map(s => s.trim());\n      return exTypes.includes(userMovType);\n    });\n    if (withType.length >= minCount) return withType;\n  }\n  // Soft fallback: ignore movement_type if pool too small\n  return allExercises.filter(baseFilter);\n}\n\n// Fallback goal groups (per spec)\nconst fallbackMap = {\n  energy:  ['energy', 'active'],\n  active:  ['active', 'energy'],\n  destress: ['destress', 'posture', 'core'],\n  posture:  ['posture', 'destress', 'core'],\n  core:     ['core', 'destress', 'posture']\n};\nconst goalFallbacks = fallbackMap[profile.primary_goal] || [profile.primary_goal];\n\n// Body focus slot rules per goal (sessions: morning, midday, afternoon, evening)\nconst slotBodyFocus = {\n  energy:  [['full_body'], ['upper_body', 'full_body'], ['full_body'], ['full_body']],\n  destress:[['full_body'], ['upper_body', 'full_body'], ['full_body'], ['full_body']],\n  posture: [['full_body'], ['lower_body', 'full_body'], ['upper_body', 'full_body'], ['full_body']],\n  active:  [['lower_body', 'full_body'], ['upper_body', 'full_body'], ['full_body'], ['full_body']],\n  core:    [['full_body'], ['lower_body', 'full_body'], ['full_body'], ['full_body']]\n};\nconst bodyFocusRules = slotBodyFocus[profile.primary_goal]\n  || [['full_body'], ['full_body'], ['full_body'], ['full_body']];\n\nconst sessions = ['morning', 'midday', 'afternoon', 'evening'];\n\nfunction pickRandom(arr) {\n  if (!arr || arr.length === 0) return null;\n  return arr[Math.floor(Math.random() * arr.length)];\n}\n\n// Build 4-week plan\nconst globalUsedMainIds = new Set(); // anti-repetition across weeks\nconst warmupPool = getWarmupPool();\nconst plan = {};\n\nfor (let w = 0; w < 4; w++) {\n  const weekNum = w + 1;\n  const weekLevel = weekLevels[w];\n\n  // Build main pool with goal fallback\n  let mainPool = [];\n  for (const goal of goalFallbacks) {\n    const pool = getMainPool(goal, weekLevel);\n    const fresh = pool.filter(e => !mainPool.find(m => m.ex_id === e.ex_id));\n    mainPool = [...mainPool, ...fresh];\n    if (mainPool.length >= 4) break;\n  }\n\n  // Prefer exercises not used in previous weeks\n  const freshMain = mainPool.filter(e => !globalUsedMainIds.has(e.ex_id));\n  const effectiveMain = freshMain.length >= 4 ? freshMain : mainPool;\n\n  const weekUsedWarmupIds = new Set();\n  const weekUsedMainIds = new Set();\n  const weekPlan = {};\n\n  for (let s = 0; s < 4; s++) {\n    // Warmup: unique within week, repeats between weeks allowed\n    const warmupCandidates = warmupPool.filter(e => !weekUsedWarmupIds.has(e.ex_id));\n    const wu = pickRandom(warmupCandidates.length > 0 ? warmupCandidates : warmupPool);\n    if (wu) weekUsedWarmupIds.add(wu.ex_id);\n\n    // Main: match body_focus slot rule, fallback to any unused, then any\n    const slotFocus = bodyFocusRules[s];\n    let mainCandidates = effectiveMain.filter(e =>\n      !weekUsedMainIds.has(e.ex_id) && slotFocus.includes(e.body_focus)\n    );\n    if (mainCandidates.length === 0) {\n      mainCandidates = effectiveMain.filter(e => !weekUsedMainIds.has(e.ex_id));\n    }\n    if (mainCandidates.length === 0) {\n      mainCandidates = mainPool;\n    }\n    const mx = pickRandom(mainCandidates);\n    if (mx) {\n      weekUsedMainIds.add(mx.ex_id);\n      globalUsedMainIds.add(mx.ex_id);\n    }\n\n    weekPlan[sessions[s]] = {\n      warmup: wu ? {\n        ex_id: wu.ex_id,\n        name: wu.name,\n        description: wu.description,\n        body_focus: wu.body_focus,\n        level: wu.level,\n        intensity: wu.intensity,\n        movement_type: wu.movement_type,\n        image_url: wu.image_url,\n        cues: wu.cues\n      } : null,\n      main: mx ? {\n        ex_id: mx.ex_id,\n        name: mx.name,\n        description: mx.description,\n        body_focus: mx.body_focus,\n        level: mx.level,\n        intensity: mx.intensity,\n        movement_type: mx.movement_type,\n        primary_goal: mx.primary_goal,\n        image_url: mx.image_url,\n        cues: mx.cues\n      } : null\n    };\n  }\n  plan[`week_${weekNum}`] = weekPlan;\n}\n\nreturn [{ json: { program_plan: plan, email } }];"
       },
       "name": "Build Program Plan",
       "type": "n8n-nodes-base.code",
@@ -250,13 +250,96 @@
     {
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const result = items[0].json;\nreturn [{ json: { status: 'ok', message: 'Lead saved and program plan generated', email: result.email } }];"
+        "jsCode": "const planData = $('Build Program Plan').first().json;\nconst dbRecord = $('Build DB Record').first().json;\n\nconst profile = JSON.parse(dbRecord.user_profile);\nconst programPlan = planData.program_plan;\nconst weekPlan = programPlan['week_1'];\n\nconst sessions = ['morning', 'midday', 'afternoon', 'evening'];\nconst weekPlanForPdf = {};\nfor (const s of sessions) {\n  const slot = weekPlan[s] || {};\n  weekPlanForPdf[s] = {\n    warmup: slot.warmup ? {\n      name: slot.warmup.name,\n      description: slot.warmup.description,\n      image_url: slot.warmup.image_url,\n      cues: slot.warmup.cues\n    } : null,\n    main: slot.main ? {\n      name: slot.main.name,\n      description: slot.main.description,\n      image_url: slot.main.image_url,\n      cues: slot.main.cues\n    } : null\n  };\n}\n\nreturn [{ json: {\n  name: dbRecord.name,\n  email: dbRecord.email,\n  week_number: 1,\n  week_plan: weekPlanForPdf,\n  profile: profile\n} }];"
+      },
+      "name": "Build PDF Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2400,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://pdf-service:3001/generate-pdf",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ ({ name: $json.name, week_number: $json.week_number, week_plan: $json.week_plan, profile: $json.profile }) }}",
+        "options": {}
+      },
+      "name": "Generate PDF",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2620,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.RESEND_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "options": {},
+        "specifyBody": "json",
+        "jsonBody": "={{ ({\n  from: $env.RESEND_FROM,\n  to: [$('Build PDF Payload').first().json.email],\n  subject: 'Your MDT Week 1 Training Plan',\n  html: '<p>Hi ' + $('Build PDF Payload').first().json.name + ',</p><p>Your personalised training plan for Week 1 is attached.</p><p>Complete each session at your chosen time of day.</p><p>— MDT Team</p>',\n  attachments: [{ filename: 'week1-plan.pdf', content: $json.pdf }]\n}) }}"
+      },
+      "name": "Send Email Week 1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2840,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE leads SET week1_sent_at = NOW(), updated_at = NOW() WHERE email = $1",
+        "options": {
+          "queryReplacement": "={{ [$('Build PDF Payload').first().json.email] }}"
+        }
+      },
+      "name": "Update week1_sent_at",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        3060,
+        300
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "mdt-pg-cred",
+          "name": "MDT Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const email = $('Build PDF Payload').first().json.email;\nreturn [{ json: { status: 'ok', message: 'Lead saved, plan generated and week 1 PDF sent', email } }];"
       },
       "name": "Send response",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2400,
+        3280,
         300
       ]
     }
@@ -362,6 +445,50 @@
       ]
     },
     "Save Program": {
+      "main": [
+        [
+          {
+            "node": "Build PDF Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build PDF Payload": {
+      "main": [
+        [
+          {
+            "node": "Generate PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate PDF": {
+      "main": [
+        [
+          {
+            "node": "Send Email Week 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Email Week 1": {
+      "main": [
+        [
+          {
+            "node": "Update week1_sent_at",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update week1_sent_at": {
       "main": [
         [
           {

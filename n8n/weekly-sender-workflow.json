@@ -1,0 +1,185 @@
+{
+  "id": "770e8400-e29b-41d4-a716-446655440003",
+  "name": "MDT Weekly PDF Sender",
+  "active": true,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * *"
+            }
+          ]
+        }
+      },
+      "name": "Daily 9am Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [200, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id, name, email, user_profile, program_plan,\n  CASE\n    WHEN week1_sent_at IS NOT NULL AND week2_sent_at IS NULL AND week1_sent_at + interval '7 days' <= NOW() THEN 2\n    WHEN week2_sent_at IS NOT NULL AND week3_sent_at IS NULL AND week2_sent_at + interval '7 days' <= NOW() THEN 3\n    WHEN week3_sent_at IS NOT NULL AND week4_sent_at IS NULL AND week3_sent_at + interval '7 days' <= NOW() THEN 4\n  END AS week_to_send\nFROM leads\nWHERE payment_date IS NOT NULL\n  AND (\n    (week1_sent_at IS NOT NULL AND week2_sent_at IS NULL AND week1_sent_at + interval '7 days' <= NOW()) OR\n    (week2_sent_at IS NOT NULL AND week3_sent_at IS NULL AND week2_sent_at + interval '7 days' <= NOW()) OR\n    (week3_sent_at IS NOT NULL AND week4_sent_at IS NULL AND week3_sent_at + interval '7 days' <= NOW())\n  )",
+        "options": {}
+      },
+      "name": "Find Due Leads",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [420, 300],
+      "credentials": {
+        "postgres": {
+          "id": "mdt-pg-cred",
+          "name": "MDT Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const lead = $input.item.json;\nconst weekNum = lead.week_to_send;\nconst programPlan = typeof lead.program_plan === 'string' ? JSON.parse(lead.program_plan) : lead.program_plan;\nconst profile = typeof lead.user_profile === 'string' ? JSON.parse(lead.user_profile) : lead.user_profile;\nconst weekPlan = programPlan[`week_${weekNum}`];\n\nconst sessions = ['morning', 'midday', 'afternoon', 'evening'];\nconst weekPlanForPdf = {};\nfor (const s of sessions) {\n  const slot = weekPlan[s] || {};\n  weekPlanForPdf[s] = {\n    warmup: slot.warmup ? {\n      name: slot.warmup.name,\n      description: slot.warmup.description,\n      image_url: slot.warmup.image_url,\n      cues: slot.warmup.cues\n    } : null,\n    main: slot.main ? {\n      name: slot.main.name,\n      description: slot.main.description,\n      image_url: slot.main.image_url,\n      cues: slot.main.cues\n    } : null\n  };\n}\n\nreturn { json: {\n  lead_id: lead.id,\n  name: lead.name,\n  email: lead.email,\n  week_number: weekNum,\n  week_plan: weekPlanForPdf,\n  profile: profile\n} };"
+      },
+      "name": "Build PDF Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [640, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://pdf-service:3001/generate-pdf",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ ({ name: $json.name, week_number: $json.week_number, week_plan: $json.week_plan, profile: $json.profile }) }}",
+        "options": {}
+      },
+      "name": "Generate PDF",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [860, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $env.RESEND_API_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={{ JSON.stringify({\n  from: $env.RESEND_FROM,\n  to: [$('Build PDF Payload').item.json.email],\n  subject: 'Your MDT Week ' + $('Build PDF Payload').item.json.week_number + ' Training Plan',\n  html: '<p>Hi ' + $('Build PDF Payload').item.json.name + ',</p><p>Your personalised training plan for Week ' + $('Build PDF Payload').item.json.week_number + ' is attached.</p>' + ($('Build PDF Payload').item.json.week_number === 4 ? '<p>This is your final week — great work completing the programme!</p>' : '<p>See you next week for Week ' + ($('Build PDF Payload').item.json.week_number + 1) + '!</p>') + '<p>— MDT Team</p>',\n  attachments: [{ filename: 'week' + $('Build PDF Payload').item.json.week_number + '-plan.pdf', content: $json.pdf_base64 }]\n}) }}",
+        "options": {}
+      },
+      "name": "Send Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1080, 300]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const weekNum = $('Build PDF Payload').item.json.week_number;\nconst leadId = $('Build PDF Payload').item.json.lead_id;\nreturn { json: {\n  query: `UPDATE leads SET week${weekNum}_sent_at = NOW(), updated_at = NOW() WHERE id = $1`,\n  lead_id: leadId\n} };"
+      },
+      "name": "Build Update Query",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1300, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ $json.query }}",
+        "options": {
+          "queryReplacement": "={{ [$json.lead_id] }}"
+        }
+      },
+      "name": "Update sent_at",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [1520, 300],
+      "credentials": {
+        "postgres": {
+          "id": "mdt-pg-cred",
+          "name": "MDT Postgres"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Daily 9am Trigger": {
+      "main": [
+        [
+          {
+            "node": "Find Due Leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Due Leads": {
+      "main": [
+        [
+          {
+            "node": "Build PDF Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build PDF Payload": {
+      "main": [
+        [
+          {
+            "node": "Generate PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate PDF": {
+      "main": [
+        [
+          {
+            "node": "Send Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Email": {
+      "main": [
+        [
+          {
+            "node": "Build Update Query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Update Query": {
+      "main": [
+        [
+          {
+            "node": "Update sent_at",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {},
+  "tags": []
+}
