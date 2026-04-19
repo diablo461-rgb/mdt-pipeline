@@ -22,7 +22,8 @@ CREATE TABLE IF NOT EXISTS leads (
     week1_sent_at TIMESTAMP,
     week2_sent_at TIMESTAMP,
     week3_sent_at TIMESTAMP,
-    week4_sent_at TIMESTAMP
+    week4_sent_at TIMESTAMP,
+    next_sent_at TIMESTAMP
 );
 
 -- Индексы для производительности

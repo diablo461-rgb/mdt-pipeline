@@ -1,6 +1,7 @@
 'use strict';
 
-const { PDFDocument, rgb, StandardFonts, PDFName, PDFString, PDFArray } = require('pdf-lib');
+const { PDFDocument, rgb, PDFName, PDFString, PDFArray } = require('pdf-lib');
+const fontkit = require('@pdf-lib/fontkit');
 const fs   = require('fs');
 const path = require('path');
 
@@ -160,9 +161,11 @@ function overlayPage1(pdfDoc, page, { name, calendarUrl, bold }) {
     displayName = displayName.slice(0, -1);
   }
 
+  // Cover template underline (x=145–204, top=297–298) with a 2pt-tall rect
+  page.drawRectangle({ x: 144, y: toY(297), width: 68, height: 2, color: rgb(1, 1, 1) });
   page.drawText(sanitize(displayName), {
-    x: 144,
-    y: toY(298),          // baseline ≈ bottom of text bounding box
+    x: 150,               // +6pt space before name
+    y: toY(298),
     font: bold,
     size: nameFontSize,
     color: DARK,
@@ -179,26 +182,59 @@ function overlayPage1(pdfDoc, page, { name, calendarUrl, bold }) {
 /**
  * Page 2 – Your Profile.
  * Template has blank underlines after Focus: / Level: / Environment: / Sensitivity:
+ * Values in Bold Work Sans, size 17.
  */
 function overlayPage2(page, { profile, regular }) {
-  const sz = 13;
-  // Baselines derived from pdfplumber "bottom" of each label:
-  // Focus:       bottom=108  → y = PAGE_H-108 = 734
-  // Level:       bottom=150  → y = PAGE_H-150 = 692
-  // Environment: bottom=192  → y = PAGE_H-192 = 650
-  // Sensitivity: bottom=234  → y = PAGE_H-234 = 608
+  const sz = 17;
   const entries = [
-    { x: 125, y: toY(108), value: profile.focus        || profile.primary_goal || '' },
-    { x: 125, y: toY(150), value: profile.level        || '' },
-    { x: 200, y: toY(192), value: Array.isArray(profile.spaces)
+    { y: toY(108), value: profile.focus        || profile.primary_goal || '' },
+    { y: toY(150), value: profile.level        || '' },
+    { y: toY(192), value: Array.isArray(profile.spaces)
         ? profile.spaces.join(', ')
         : String(profile.spaces || '') },
-    { x: 200, y: toY(234), value: profile.sensitivity  || '' },
+    { y: toY(234), value: profile.sensitivity  || '' },
   ];
-  for (const { x, y, value } of entries) {
+  for (const { y, value } of entries) {
     if (value) {
-      page.drawText(sanitize(String(value)), { x, y, font: regular, size: sz, color: DARK });
+      page.drawText(sanitize(String(value)), { x: 190, y, font: regular, size: sz, color: DARK });
     }
+  }
+}
+
+/**
+ * Page 3 – General concept + Your weekly plan table.
+ * Fills in Warm-Up and Main Exercise columns with exercise names.
+ */
+function overlayPage3(page, { weekPlan, regular }) {
+  const sz = 13;
+  // Column x positions (from pdfplumber): Warm-Up header x0=294, Main Exercise x0=403
+  const warmupX = 282;
+  const mainX   = 393;
+  const warmupW = 108;  // width until Main column
+  const mainW   = 130;  // width until right margin
+
+  // Row baselines (pdfplumber bot → pdf-lib y):
+  //   Morning bot=720, Midday bot=749, Afternoon bot=779, Evening bot=808
+  const rows = [
+    { y: toY(720), slot: weekPlan.morning   },
+    { y: toY(749), slot: weekPlan.midday    },
+    { y: toY(779), slot: weekPlan.afternoon },
+    { y: toY(808), slot: weekPlan.evening   },
+  ];
+
+  for (const { y, slot } of rows) {
+    if (!slot) continue;
+    const wuName = slot.warmup && slot.warmup.name ? sanitize(String(slot.warmup.name)) : '';
+    const mnName = slot.main   && slot.main.name   ? sanitize(String(slot.main.name))   : '';
+
+    // Truncate to fit column width
+    let wu = wuName;
+    while (wu.length > 1 && regular.widthOfTextAtSize(wu, sz) > warmupW - 4) wu = wu.slice(0, -1);
+    let mn = mnName;
+    while (mn.length > 1 && regular.widthOfTextAtSize(mn, sz) > mainW - 4) mn = mn.slice(0, -1);
+
+    if (wu) page.drawText(wu, { x: warmupX, y, font: regular, size: sz, color: DARK });
+    if (mn) page.drawText(mn, { x: mainX,   y, font: regular, size: sz, color: DARK });
   }
 }
 
@@ -245,53 +281,54 @@ async function overlaySessionPage(pdfDoc, page, slot1, slot2, fonts) {
 }
 
 async function overlayExerciseRow(pdfDoc, page, exercise, rowTop, { bold, regular }) {
-  // Col1 image box: x=19–198, y from rowTop to rowTop+160 (160pt height)
-  const imgX      = 19;
-  const imgYBot   = toY(rowTop + 160);
-  const imgWidth  = 179;
-  const imgHeight = 160;
+  const PAD = 4;  // 4pt padding on all sides
+
+  // Col1 image box: x=19–198, rowTop to rowTop+160
+  const imgX      = 19 + PAD;
+  const imgYBot   = toY(rowTop + 160 - PAD);
+  const imgWidth  = 179 - PAD * 2;
+  const imgHeight = 160 - PAD * 2;
   await drawExerciseImage(pdfDoc, page, exercise.image_url, imgX, imgYBot, imgWidth, imgHeight);
 
-  // Col2 text box: x=205–432
-  const col2X      = 213;
-  const col2Width  = 211;   // 432 - 213 - 8 margin
-  const nameSize   = 13;
-  const descSize   = 10;
-  const cueSize    = 9;
-  const lineGap    = 3;
+  // Col2 text area: x=205–432. White bg to erase template underlines.
+  const col2X     = 205 + PAD;   // 209
+  const col2Width = 432 - col2X - PAD;  // 219
+  const nameSize  = 13;
+  const descSize  = 11;
+  const cueSize   = 9;
+  const lineGap   = 3;
 
-  // Name (bold) – baseline at bottom of row top bounding box
-  const nameY = toY(rowTop + 14 + nameSize);  // 14pt top padding
+  // Name (Bold) – 4pt from top of row
+  const nameY = toY(rowTop + PAD + nameSize);
   page.drawText(sanitize(String(exercise.name || '')), {
     x: col2X, y: nameY, font: bold, size: nameSize, color: DARK,
   });
 
-  // Description (regular, wrapped)
+  // Description (Regular size 11, wrapped)
   let curY = nameY - nameSize - lineGap - 2;
   if (exercise.description) {
     curY = drawWrapped(page, exercise.description, regular, descSize,
-      col2X, curY, col2Width, lineGap, MID);
+      col2X, curY, col2Width, lineGap, DARK);
   }
 
   // Cues below description
   if (exercise.cues) {
-    curY -= 4;
+    curY -= PAD;
     drawWrapped(page, exercise.cues, regular, cueSize,
       col2X, curY, col2Width, lineGap, MID);
   }
 
-  // Col3 top small box: x=441–576, top=rowTop to rowTop+76
-  const col3X      = 449;
-  const col3Width  = 119;
-  const col3aY     = toY(rowTop + 10 + 9); // y of first text line in col3a
+  // Col3 two stacked boxes: x=441–576. White bg first.
+  const col3X     = 441 + PAD;  // 445
+  const col3Width = 576 - col3X - PAD;  // 127
 
-  // Show exercise name again (short) as a label
-  const shortName = String(exercise.name || '');
-  drawWrapped(page, shortName, bold, 8, col3X, col3aY, col3Width, 3, DARK);
+  // Col3a top box (rowTop to rowTop+76): exercise name (Bold)
+  const col3aY = toY(rowTop + PAD + 8);
+  drawWrapped(page, String(exercise.name || ''), bold, 8, col3X, col3aY, col3Width, 3, DARK);
 
-  // Col3 bottom small box: cues (top=rowTop+84 to rowTop+160)
+  // Col3b bottom box (rowTop+84 to rowTop+160): cues (Regular)
   if (exercise.cues) {
-    const col3bY = toY(rowTop + 84 + 10 + 9);
+    const col3bY = toY(rowTop + 84 + PAD + 8);
     drawWrapped(page, exercise.cues, regular, 8, col3X, col3bY, col3Width, 3, MID);
   }
 }
@@ -331,15 +368,18 @@ async function overlayWeekPDF({ weekNum, name, profile, weekPlan, calendarUrl, b
   const templateBytes = fs.readFileSync(templatePath);
 
   const pdfDoc = await PDFDocument.load(templateBytes);
+  pdfDoc.registerFontkit(fontkit);
 
-  const bold    = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-  const regular = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const fontsDir = path.join(__dirname, 'fonts');
+  const bold    = await pdfDoc.embedFont(fs.readFileSync(path.join(fontsDir, 'WorkSans-Bold.ttf')));
+  const regular = await pdfDoc.embedFont(fs.readFileSync(path.join(fontsDir, 'WorkSans-Regular.ttf')));
 
   const pages = pdfDoc.getPages();
-  const [p1, p2, , p4, p5, p6] = pages;
+  const [p1, p2, p3, p4, p5, p6] = pages;
 
   overlayPage1(pdfDoc, p1, { name, calendarUrl, bold });
   overlayPage2(p2, { profile, regular });
+  if (p3) overlayPage3(p3, { weekPlan, regular });
   await overlaySessionPage(pdfDoc, p4, weekPlan.morning,   weekPlan.midday,   { bold, regular });
   await overlaySessionPage(pdfDoc, p5, weekPlan.afternoon, weekPlan.evening,  { bold, regular });
   if (p6) overlayPage6(pdfDoc, p6, { bonusVideoUrl });
