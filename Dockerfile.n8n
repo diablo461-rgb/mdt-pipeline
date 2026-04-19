@@ -1,0 +1,4 @@
+FROM n8nio/n8n:latest
+
+# The n8n base image already includes pg in its node_modules.
+# Custom Function nodes can use require('pg') when allowed by environment.

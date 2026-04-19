@@ -1,0 +1,133 @@
+{
+  "id": "550e8400-e29b-41d4-a716-446655440001",
+  "name": "Tally → PostgreSQL lead capture",
+  "active": true,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "tally-webhook",
+        "responseMode": "lastNode",
+        "responseData": "application/json",
+        "options": {}
+      },
+      "name": "Tally Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        200,
+        300
+      ],
+      "webhookId": "3b8b6ef8-8b4d-4fe8-90b4-0ef4d8d5f7e4"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const envelope = items[0]?.json ?? {};\nconst payload = envelope?.body ?? {};\nconst formData = payload?.data ?? {};\nconst fields = Array.isArray(formData?.fields) ? formData.fields : [];\n\nconst FIELD_KEYS = Object.freeze({\n  TRAVEL_LIFESTYLE: 'question_y6lBLd',\n  AGE_GROUP: 'question_XDepXz',\n  TRAINING_ENVIRONMENT: 'question_8KdXOr',\n  TRAINING_IMPLEMENTATION: 'question_0xEKXA',\n  FOCUS: 'question_zqKklg',\n  ACTIVITY_LEVEL: 'question_lyNxQX',\n  ACTIVITY_TYPE: 'question_R0zApQ',\n  DAILY_SCHEDULE: 'question_oyAqWN',\n  SLEEP_AMOUNT: 'question_GzrZWO',\n  GENDER: 'question_V0ZKg6',\n  CYCLE_ADJUST: 'question_DNr5Nb',\n  CYCLE_PHASE: 'question_lyoLy5',\n  MINDFUL_AREAS: 'question_P6A7Kx',\n  NAME: 'question_R0XR0l',\n  EMAIL: 'question_jyBjN1',\n});\n\nfunction normalizeText(value) {\n  if (value == null) { return null; }\n  return String(value)\n    .replace(/\\u00A0/g, ' ')\n    .replace(/&nbsp;/g, ' ')\n    .replace(/\\s+/g, ' ')\n    .trim();\n}\n\nfunction buildFieldMap(fieldList) {\n  const result = {};\n  for (const field of fieldList) {\n    if (field?.key) { result[field.key] = field; }\n  }\n  return result;\n}\n\nfunction extractMultipleChoice(field) {\n  if (!field) { return null; }\n  const selectedIds = Array.isArray(field.value) ? field.value : field.value != null ? [field.value] : [];\n  if (selectedIds.length === 0) { return null; }\n  const options = Array.isArray(field.options) ? field.options : [];\n  const optionTextById = {};\n  for (const option of options) {\n    if (option?.id) { optionTextById[option.id] = normalizeText(option.text); }\n  }\n  const selectedTexts = selectedIds.map(id => optionTextById[id] ?? null).filter(Boolean);\n  if (selectedTexts.length === 0) { return null; }\n  return selectedTexts.length === 1 ? selectedTexts[0] : selectedTexts;\n}\n\nfunction extractScalar(field) {\n  if (!field || field.value == null) { return null; }\n  return typeof field.value === 'string' ? normalizeText(field.value) : field.value;\n}\n\nfunction extractValue(field) {\n  if (!field) { return null; }\n  switch (field.type) {\n    case 'MULTIPLE_CHOICE': return extractMultipleChoice(field);\n    case 'INPUT_TEXT':\n    case 'INPUT_EMAIL': return extractScalar(field);\n    default: return extractScalar(field);\n  }\n}\n\nconst fieldMap = buildFieldMap(fields);\n\nreturn [{\n  json: {\n    tally: {\n      eventId: payload.eventId ?? null,\n      eventType: payload.eventType ?? null,\n      createdAt: payload.createdAt ?? null,\n      responseId: formData.responseId ?? null,\n      submissionId: formData.submissionId ?? null,\n      respondentId: formData.respondentId ?? null,\n      formId: formData.formId ?? null,\n      formName: normalizeText(formData.formName),\n      createdAtFormResponse: formData.createdAt ?? null,\n    },\n    lead: {\n      name: extractValue(fieldMap[FIELD_KEYS.NAME]),\n      email: extractValue(fieldMap[FIELD_KEYS.EMAIL]),\n      travelLifestyle: extractValue(fieldMap[FIELD_KEYS.TRAVEL_LIFESTYLE]),\n      ageGroup: extractValue(fieldMap[FIELD_KEYS.AGE_GROUP]),\n      trainingEnvironment: extractValue(fieldMap[FIELD_KEYS.TRAINING_ENVIRONMENT]),\n      trainingImplementation: extractValue(fieldMap[FIELD_KEYS.TRAINING_IMPLEMENTATION]),\n      focus: extractValue(fieldMap[FIELD_KEYS.FOCUS]),\n      activityLevel: extractValue(fieldMap[FIELD_KEYS.ACTIVITY_LEVEL]),\n      activityType: extractValue(fieldMap[FIELD_KEYS.ACTIVITY_TYPE]),\n      dailySchedule: extractValue(fieldMap[FIELD_KEYS.DAILY_SCHEDULE]),\n      sleepAmount: extractValue(fieldMap[FIELD_KEYS.SLEEP_AMOUNT]),\n      gender: extractValue(fieldMap[FIELD_KEYS.GENDER]),\n      cycleAdjust: extractValue(fieldMap[FIELD_KEYS.CYCLE_ADJUST]),\n      cyclePhase: extractValue(fieldMap[FIELD_KEYS.CYCLE_PHASE]),\n      mindfulAreas: extractValue(fieldMap[FIELD_KEYS.MINDFUL_AREAS]),\n    }\n  }\n}];"
+      },
+      "name": "Parse Tally payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        420,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const payload = items[0].json;\nconst lead    = payload.lead || {};\n\nconst GOAL_MAP = {\n  'Energize & Refocus':      'energy',\n  'De-Stress & Reset':       'destress',\n  'Posture & Mobility Flow': 'posture',\n  'Stay Fit & Active':       'active',\n  'Core & Balance':          'core',\n};\nconst SPACE_MAP = {\n  'Indoor':             'indoor',\n  'Outdoors':           'outdoors',\n  'Mixed environment':  'mixed',\n  'Mixed':              'mixed',\n  'Indoors (hotel room, Airbnb, apartment)': 'indoor',\n};\nconst EQUIP_MAP = {\n  'Bodyweight only':             'none',\n  'Bodyweight + everyday items': 'everyday_items',\n  'Bodyweight + Everyday Items': 'everyday_items',\n};\nconst LEVEL_MAP = {\n  'Beginner':     'beginner',\n  'Intermediate': 'intermediate',\n  'Advanced':     'advanced',\n  'Intermediate (active, but inconsistent)': 'intermediate',\n  'Beginner (just starting out)':            'beginner',\n  'Advanced (very consistent)':              'advanced',\n};\nconst CONTRA_MAP = {\n  'Low Back':               'low_back_pain',\n  'Low back sensitivity':   'low_back_pain',\n  'Knees':                  'knee_pain',\n  'Knee sensitivity':       'knee_pain',\n  'Shoulders':              'shoulders_pain',\n  'Shoulders sensitivity':  'shoulders_pain',\n  'High Stress':            'stress',\n  'High Stress / fatigue':  'stress',\n  'None, feeling good':      null,\n  'None':                    null,\n};\nconst SLEEP_MAP = {\n  'Less than 5 hours': 'very_low',\n  'Under 5 hours':     'very_low',\n  '5 hours':           'very_low',\n  '6-7 hours':         'normal',\n  '6\\u20137 hours':    'normal',\n  '8+ hours':          'high',\n  '8 or more':         'high',\n};\nconst MOVEMENT_MAP = {\n  'Cardio':                                        'cardio',\n  'Resistance':                                    'resistance',\n  'Resistance / strength (weights, bodyweights)': 'resistance',\n  'Yoga / Pilates':                                'mobility',\n  'Yoga/Pilates':                                  'mobility',\n  'Mixed':                                         'mix',\n};\nconst CYCLE_MAP = {\n  'Menstrual phase':  'menstrual',\n  'Follicular phase': 'follicular',\n  'Ovulatory phase':  'ovulatory',\n  'Luteal phase':     'luteal',\n  'Not applicable':   'none',\n};\n\nconst rawAreas = Array.isArray(lead.mindfulAreas)\n  ? lead.mindfulAreas\n  : lead.mindfulAreas\n    ? [lead.mindfulAreas]\n    : [];\n\nconst user_profile = {\n  primary_goal:      GOAL_MAP[lead.focus]                   || lead.focus                                      || null,\n  space:             SPACE_MAP[lead.trainingEnvironment]    || (lead.trainingEnvironment   || '').toLowerCase() || null,\n  equipment:         EQUIP_MAP[lead.trainingImplementation] || (lead.trainingImplementation || '').toLowerCase() || null,\n  level:             LEVEL_MAP[lead.activityLevel]          || (lead.activityLevel         || '').toLowerCase() || 'beginner',\n  movement_type:     MOVEMENT_MAP[lead.activityType]        || (lead.activityType          || '').toLowerCase() || null,\n  sleep_bucket:      SLEEP_MAP[lead.sleepAmount]            || 'normal',\n  sex:               (lead.gender || '').toLowerCase()      || 'undisclosed',\n  cycle_phase:       CYCLE_MAP[lead.cyclePhase]             || 'none',\n  contraindications: rawAreas.map(a => CONTRA_MAP[a] ?? null).filter(Boolean),\n  lifestyle:         (lead.travelLifestyle || '').toLowerCase().replace(/\\s+/g, '_') || null,\n  age_group:         (lead.ageGroup        || '').toLowerCase().replace(/\\s+/g, '_') || null,\n};\n\nreturn [{\n  json: {\n    name:          lead.name  || 'Unknown',\n    email:         lead.email || 'unknown@example.com',\n    status:        'new',\n    tally_payload: JSON.stringify(payload),\n    user_profile:  JSON.stringify(user_profile),\n  }\n}];"
+      },
+      "name": "Build DB Record",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        640,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO leads (name, email, status, tally_payload, user_profile)\nVALUES ($1, $2, $3, $4::jsonb, $5::jsonb)\nON CONFLICT (email) DO UPDATE SET\n  updated_at    = NOW(),\n  name          = EXCLUDED.name,\n  tally_payload = EXCLUDED.tally_payload,\n  user_profile  = EXCLUDED.user_profile\nRETURNING id, email, status",
+        "options": {
+          "queryReplacement": "={{ [$json.name, $json.email, $json.status, $json.tally_payload, $json.user_profile] }}"
+        }
+      },
+      "name": "Save to PostgreSQL",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        860,
+        300
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "mdt-postgres-cred",
+          "name": "PostgreSQL - MDT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const result = items[0].json;\nreturn [{ json: { status: 'ok', message: 'Lead received and saved', leadId: result.id, email: result.email } }];"
+      },
+      "name": "Send response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1080,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Tally Webhook": {
+      "main": [
+        [
+          {
+            "node": "Parse Tally payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Tally payload": {
+      "main": [
+        [
+          {
+            "node": "Build DB Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build DB Record": {
+      "main": [
+        [
+          {
+            "node": "Save to PostgreSQL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save to PostgreSQL": {
+      "main": [
+        [
+          {
+            "node": "Send response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {},
+  "tags": []
+}

@@ -1,0 +1,105 @@
+services:
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: mdt_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  n8n:
+    build:
+      context: .
+      dockerfile: Dockerfile.n8n
+    container_name: mdt_n8n
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      pdf-service:
+        condition: service_healthy
+    ports:
+      - "5678:5678"
+    environment:
+      # Host
+      N8N_HOST: ${N8N_HOST}
+      N8N_PORT: 5678
+      N8N_PROTOCOL: ${N8N_PROTOCOL}
+      WEBHOOK_URL: ${WEBHOOK_URL}
+      GENERIC_TIMEZONE: ${TIMEZONE}
+
+      # Auth
+      N8N_BASIC_AUTH_ACTIVE: "true"
+      N8N_BASIC_AUTH_USER: ${N8N_AUTH_USER}
+      N8N_BASIC_AUTH_PASSWORD: ${N8N_BASIC_AUTH_PASSWORD}
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}
+      N8N_SECURE_COOKIE: ${N8N_SECURE_COOKIE}
+
+      # n8n хранит workflows и executions в PostgreSQL
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: postgres
+      DB_POSTGRESDB_PORT: 5432
+      DB_POSTGRESDB_DATABASE: ${N8N_DB}
+      DB_POSTGRESDB_USER: ${POSTGRES_USER}
+      DB_POSTGRESDB_PASSWORD: ${POSTGRES_PASSWORD}
+
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+      # External services
+      NOCODB_API_TOKEN: ${NOCODB_API_TOKEN}
+      NOCODB_BASE_ID: ${NOCODB_BASE_ID}
+      NOCODB_TABLE_ID: ${NOCODB_TABLE_ID}
+      PDF_SERVICE_URL: http://pdf-service:3001
+
+    entrypoint: ["/bin/sh", "-c"]
+    command: >
+      "printf '[{\"id\":\"mdt-pg-cred\",\"name\":\"MDT Postgres\",\"type\":\"postgres\",\"data\":{\"host\":\"postgres\",\"port\":5432,\"database\":\"mdt_db\",\"user\":\"mdt_user\",\"password\":\"%s\"}}]' $$POSTGRES_PASSWORD > /tmp/pg-cred.json &&
+      n8n import:credentials --input=/tmp/pg-cred.json || true &&
+      for f in /data/n8n/*.json; do
+        n8n import:workflow --input=$$f || true;
+      done &&
+      n8n update:workflow --id=550e8400-e29b-41d4-a716-446655440001 --active=true || true &&
+      n8n start"
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./n8n:/data/n8n
+
+  pdf-service:
+    build:
+      context: ./pdf-service
+      dockerfile: Dockerfile
+    container_name: mdt_pdf_service
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      PORT: 3001
+      NOCODB_API_TOKEN: ${NOCODB_API_TOKEN}
+      NOCODB_BASE_ID: ${NOCODB_BASE_ID:-p3zeynvi4m1k7ow}
+      NOCODB_TABLE_ID: ${NOCODB_TABLE_ID:-mvi4atz2fcfexfv}
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:3001/health', r => process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))\""]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  postgres_data:
+  n8n_data:

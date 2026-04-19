@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s -c /tmp/n8n_cookies.txt -X POST http://localhost:5678/rest/login -H 'Content-Type: application/json' -d '{\"emailOrLdapLoginId\":\"admin\",\"password\":\"admin_password_123\"}')",
+      "Bash(python3 -m json.tool)",
+      "Bash(docker exec *)",
+      "Bash(curl -s -H 'X-N8N-API-KEY: n8n_api_b7750e74dfe33a11b7a86faf89cfa9c1052d4966' http://localhost:5678/api/v1/workflows)",
+      "Bash(python3 -c ' *)"
+    ]
+  }
+}

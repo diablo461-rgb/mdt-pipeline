@@ -1,0 +1,9 @@
+# Секреты — никогда в git
+.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/

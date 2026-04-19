@@ -1,0 +1,44 @@
+# PostgreSQL
+POSTGRES_USER=mdt_user
+POSTGRES_PASSWORD=your_strong_password_here
+POSTGRES_DB=mdt_db
+N8N_DB=n8n_db
+
+# n8n — локально
+N8N_HOST=localhost
+N8N_PROTOCOL=http
+WEBHOOK_URL=http://localhost:5678/
+TIMEZONE=Europe/Berlin
+N8N_SECURE_COOKIE=false
+
+# n8n auth
+N8N_AUTH_USER=admin
+N8N_AUTH_PASSWORD=your_strong_password_here
+
+# Сгенерируй: openssl rand -hex 16
+N8N_ENCRYPTION_KEY=your_32_char_key_here
+
+# ── NocoDB ──────────────────────────────────────────────────────────────────
+NOCODB_API_TOKEN=nc_pat_Gbh0VRL1x3Vjb4UQRWCrXm7Ji81oKkCxeMTKEoP1
+NOCODB_BASE_ID=p3zeynvi4m1k7ow
+NOCODB_TABLE_ID=mvi4atz2fcfexfv
+
+# ── SMTP (для отправки PDF по email) ────────────────────────────────────────
+# Добавь SMTP credentials в n8n UI: Settings → Credentials → Add → SMTP
+# id должен совпадать с "smtp-credentials" в workflow JSON
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your_email@gmail.com
+SMTP_PASSWORD=your_app_password_here
+SMTP_FROM=noreply@yourdomain.com
+
+# ── Paddle (вебхук endpoint регистрируется в Paddle Dashboard) ───────────────
+# Paddle webhook URL: https://your-n8n-domain/webhook/paddle-webhook
+# Paddle secret key для верификации (опционально):
+PADDLE_WEBHOOK_SECRET=your_paddle_webhook_secret_here
+
+# ── Hostinger (раскомментируй при деплое) ──
+# N8N_HOST=n8n.yourdomain.com
+# N8N_PROTOCOL=https
+# WEBHOOK_URL=https://n8n.yourdomain.com/
+# N8N_SECURE_COOKIE=true

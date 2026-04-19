@@ -1,0 +1,23 @@
+{
+  "name": "mdt-plan-generator",
+  "version": "1.0.0",
+  "description": "MDT Plan PDF Template Generator - Dynamic PDF generation for personalized training plans",
+  "main": "generate-pdf.js",
+  "scripts": {
+    "generate": "node generate-pdf.js",
+    "start": "node generate-pdf.js"
+  },
+  "keywords": [
+    "pdf",
+    "template",
+    "generator",
+    "mdt",
+    "training"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "puppeteer": "^21.0.0"
+  },
+  "devDependencies": {}
+}
