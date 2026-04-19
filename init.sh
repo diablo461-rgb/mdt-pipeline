@@ -2,7 +2,7 @@
 set -e
 
 # Создаём n8n_db (CREATE DATABASE нельзя в транзакции — только через psql/createdb)
-psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" \
+psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d postgres \
   -c "CREATE DATABASE n8n_db;" 2>/dev/null || echo "n8n_db already exists, skipping"
 
 # Создаём схему в mdt_db

@@ -63,8 +63,8 @@
       ],
       "credentials": {
         "postgres": {
-          "id": "mdt-postgres-cred",
-          "name": "PostgreSQL - MDT"
+          "id": "mdt-pg-cred",
+          "name": "MDT Postgres"
         }
       }
     },
