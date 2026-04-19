@@ -1,9 +1,13 @@
--- Схема БД для MDT Pipeline
--- Применяется через init.sh (shell-скрипт в /docker-entrypoint-initdb.d/)
--- CREATE DATABASE нельзя выполнить внутри транзакции/DO-блока,
--- поэтому n8n_db создаётся через psql-команду в init.sh
+#!/bin/bash
+set -e
 
--- Таблица для лидов из Tally
+# Создаём n8n_db (CREATE DATABASE нельзя в транзакции — только через psql/createdb)
+psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" \
+  -c "CREATE DATABASE n8n_db;" 2>/dev/null || echo "n8n_db already exists, skipping"
+
+# Создаём схему в mdt_db
+psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB" << 'SQL'
+
 CREATE TABLE IF NOT EXISTS leads (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255),
@@ -25,7 +29,8 @@ CREATE TABLE IF NOT EXISTS leads (
     week4_sent_at TIMESTAMP
 );
 
--- Индексы для производительности
 CREATE INDEX IF NOT EXISTS idx_leads_email ON leads(email);
 CREATE INDEX IF NOT EXISTS idx_leads_status ON leads(status);
 CREATE INDEX IF NOT EXISTS idx_leads_payment_date ON leads(payment_date);
+
+SQL
