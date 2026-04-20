@@ -161,8 +161,10 @@ function overlayPage1(pdfDoc, page, { name, calendarUrl, bold }) {
     displayName = displayName.slice(0, -1);
   }
 
-  // Cover template underline (x=145–204, top=297–298) with a 2pt-tall rect
-  page.drawRectangle({ x: 144, y: toY(297), width: 68, height: 2, color: rgb(1, 1, 1) });
+  // Cover template underline: top=297, bot=298 → pdf-lib y=844–845 (toY(298)=544, toY(297)=545)
+  // Rect must start at y=543 to cover the 1pt curve at y=544–545.
+  // Use photo background colour (~warm light grey) so the rect blends in.
+  page.drawRectangle({ x: 143, y: toY(298) - 1, width: 70, height: 4, color: rgb(0.90, 0.89, 0.87) });
   page.drawText(sanitize(displayName), {
     x: 150,               // +6pt space before name
     y: toY(298),
