@@ -32,6 +32,20 @@ SMTP_USER=your_email@gmail.com
 SMTP_PASSWORD=your_app_password_here
 SMTP_FROM=noreply@yourdomain.com
 
+# Public URL where pdf-service is reachable from the generated PDF.
+# Local example: http://localhost:3001
+# Public example: https://your-domain.com or https://your-ngrok-subdomain.ngrok.app
+PUBLIC_BASE_URL=http://localhost:3001
+
+# ── Calendar links for PDF button (week-specific ICS/webcal/google links) ───
+# Если оставить пустым, pdf-service сам покажет страницу выбора календаря
+# и даст пользователю выбрать сервис и время вручную.
+CALENDAR_DEFAULT_URL=
+CALENDAR_WEEK1_URL=
+CALENDAR_WEEK2_URL=
+CALENDAR_WEEK3_URL=
+CALENDAR_WEEK4_URL=
+
 # ── Paddle (вебхук endpoint регистрируется в Paddle Dashboard) ───────────────
 # Paddle webhook URL: https://your-n8n-domain/webhook/paddle-webhook
 # Paddle secret key для верификации (опционально):

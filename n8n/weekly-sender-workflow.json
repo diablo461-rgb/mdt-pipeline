@@ -39,7 +39,7 @@
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const lead = $input.item.json;\nconst weekNum = lead.week_to_send;\nconst programPlan = typeof lead.program_plan === 'string' ? JSON.parse(lead.program_plan) : lead.program_plan;\nconst profile = typeof lead.user_profile === 'string' ? JSON.parse(lead.user_profile) : lead.user_profile;\nconst weekPlan = programPlan[`week_${weekNum}`];\n\nconst sessions = ['morning', 'midday', 'afternoon', 'evening'];\nconst weekPlanForPdf = {};\nfor (const s of sessions) {\n  const slot = weekPlan[s] || {};\n  weekPlanForPdf[s] = {\n    warmup: slot.warmup ? {\n      name: slot.warmup.name,\n      description: slot.warmup.description,\n      image_url: slot.warmup.image_url,\n      cues: slot.warmup.cues\n    } : null,\n    main: slot.main ? {\n      name: slot.main.name,\n      description: slot.main.description,\n      image_url: slot.main.image_url,\n      cues: slot.main.cues\n    } : null\n  };\n}\n\nreturn { json: {\n  lead_id: lead.id,\n  name: lead.name,\n  email: lead.email,\n  week_number: weekNum,\n  week_plan: weekPlanForPdf,\n  profile: profile\n} };"
+        "jsCode": "const lead = $input.item.json;\nconst weekNum = lead.week_to_send;\nconst programPlan = typeof lead.program_plan === 'string' ? JSON.parse(lead.program_plan) : lead.program_plan;\nconst profile = typeof lead.user_profile === 'string' ? JSON.parse(lead.user_profile) : lead.user_profile;\nconst weekPlan = programPlan[`week_${weekNum}`];\n\nconst sessions = ['morning', 'midday', 'afternoon', 'evening'];\nconst weekPlanForPdf = {};\nfor (const s of sessions) {\n  const slot = weekPlan[s] || {};\n  weekPlanForPdf[s] = {\n    warmup: slot.warmup ? {\n      name: slot.warmup.name,\n      description: slot.warmup.description,\n      image_url: slot.warmup.image_url,\n      cues: slot.warmup.cues\n    } : null,\n    main: slot.main ? {\n      name: slot.main.name,\n      description: slot.main.description,\n      image_url: slot.main.image_url,\n      cues: slot.main.cues\n    } : null\n  };\n}\n\nconst calendarMap = {\n  1: $env.CALENDAR_WEEK1_URL || $env.CALENDAR_URL_WEEK1 || $env.CALENDAR_WEEK_1_URL || '',\n  2: $env.CALENDAR_WEEK2_URL || $env.CALENDAR_URL_WEEK2 || $env.CALENDAR_WEEK_2_URL || '',\n  3: $env.CALENDAR_WEEK3_URL || $env.CALENDAR_URL_WEEK3 || $env.CALENDAR_WEEK_3_URL || '',\n  4: $env.CALENDAR_WEEK4_URL || $env.CALENDAR_URL_WEEK4 || $env.CALENDAR_WEEK_4_URL || ''\n};\nconst calendarUrl = calendarMap[weekNum] || $env.CALENDAR_DEFAULT_URL || '';\n\nreturn { json: {\n  lead_id: lead.id,\n  name: lead.name,\n  email: lead.email,\n  week_number: weekNum,\n  week_plan: weekPlanForPdf,\n  profile: profile,\n  calendar_url: calendarUrl\n} };"
       },
       "name": "Build PDF Payload",
       "type": "n8n-nodes-base.code",
@@ -53,7 +53,7 @@
         "sendBody": true,
         "contentType": "json",
         "specifyBody": "json",
-        "jsonBody": "={{ ({ name: $json.name, week_number: $json.week_number, week_plan: $json.week_plan, profile: $json.profile }) }}",
+        "jsonBody": "={{ ({ name: $json.name, week_number: $json.week_number, week_plan: $json.week_plan, profile: $json.profile, calendar_url: $json.calendar_url }) }}",
         "options": {}
       },
       "name": "Generate PDF",

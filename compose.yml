@@ -68,6 +68,12 @@ services:
       PDF_SERVICE_URL: http://pdf-service:3001
       RESEND_API_KEY: ${RESEND_API_KEY}
       RESEND_FROM: ${RESEND_FROM}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL}
+      CALENDAR_DEFAULT_URL: ${CALENDAR_DEFAULT_URL}
+      CALENDAR_WEEK1_URL: ${CALENDAR_WEEK1_URL}
+      CALENDAR_WEEK2_URL: ${CALENDAR_WEEK2_URL}
+      CALENDAR_WEEK3_URL: ${CALENDAR_WEEK3_URL}
+      CALENDAR_WEEK4_URL: ${CALENDAR_WEEK4_URL}
       N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
 
     entrypoint: ["/bin/sh", "-c"]
@@ -93,6 +99,7 @@ services:
       - "3001:3001"
     environment:
       PORT: 3001
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost:3001}
       NOCODB_API_TOKEN: ${NOCODB_API_TOKEN}
       NOCODB_BASE_ID: ${NOCODB_BASE_ID:-p3zeynvi4m1k7ow}
       NOCODB_TABLE_ID: ${NOCODB_TABLE_ID:-mvi4atz2fcfexfv}
