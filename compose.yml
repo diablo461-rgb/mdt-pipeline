@@ -75,6 +75,7 @@ services:
       CALENDAR_WEEK3_URL: ${CALENDAR_WEEK3_URL}
       CALENDAR_WEEK4_URL: ${CALENDAR_WEEK4_URL}
       N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
+      NODE_FUNCTION_ALLOW_BUILTIN: crypto
 
     entrypoint: ["/bin/sh", "-c"]
     command: >

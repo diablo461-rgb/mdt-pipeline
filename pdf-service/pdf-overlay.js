@@ -13,6 +13,8 @@ const toY = (top) => PAGE_H - top;
 
 const DARK = rgb(0.05, 0.05, 0.05);
 const MID = rgb(0.25, 0.25, 0.25);
+const WHITE = rgb(1, 1, 1);
+const WHITE_MID = rgb(0.75, 0.75, 0.75);
 
 function normalizeUrl(url) {
   if (!url) return '';
@@ -133,10 +135,25 @@ function toDirectImageUrl(url) {
 
   const fileId = extractGoogleDriveFileId(normalized);
   if (fileId) {
-    return `https://drive.google.com/uc?export=download&id=${fileId}`;
+    return `https://drive.google.com/thumbnail?id=${fileId}&sz=w1600`;
   }
 
   return normalized;
+}
+
+function buildImageFetchCandidates(url) {
+  const normalized = parseImageUrl(url);
+  if (!normalized) return [];
+
+  const fileId = extractGoogleDriveFileId(normalized);
+  if (!fileId) return [normalized];
+
+  return [
+    `https://drive.google.com/thumbnail?id=${fileId}&sz=w1600`,
+    `https://drive.google.com/uc?export=download&id=${fileId}`,
+    `https://drive.google.com/uc?export=view&id=${fileId}`,
+    normalized,
+  ];
 }
 
 function parseImageUrl(value) {
@@ -326,6 +343,15 @@ async function resolveDriveConfirmPage(response) {
     return requestBinary(confirmUrl, 10);
   }
 
+  const jsonDownloadMatch = html.match(/"downloadUrl":"(https:[^"]+)"/i);
+  if (jsonDownloadMatch) {
+    const confirmUrl = jsonDownloadMatch[1]
+      .replace(/\\u003d/g, '=')
+      .replace(/\\u0026/g, '&')
+      .replace(/\\/g, '');
+    return requestBinary(confirmUrl, 10);
+  }
+
   const formMatch = html.match(/<form[^>]+action="([^"]*uc[^"]*)"[^>]*>/i);
   if (formMatch) {
     const formUrl = new URL(formMatch[1].replace(/&amp;/g, '&'), 'https://drive.google.com').toString();
@@ -347,53 +373,79 @@ async function resolveDriveConfirmPage(response) {
 }
 
 async function fetchImageBytes(url) {
-  const normalized = parseImageUrl(url);
-  if (!normalized) {
+  const candidates = buildImageFetchCandidates(url);
+  if (!candidates.length) {
     throw new Error('Empty image URL');
   }
 
-  let response = await requestBinary(normalized, 10);
+  const errors = [];
 
-  if (response.statusCode !== 200) {
-    throw new Error(`HTTP ${response.statusCode}`);
-  }
+  for (const candidate of candidates) {
+    try {
+      let response = await requestBinary(candidate, 10);
 
-  let format = detectImageFormat(response);
-  if (format) {
-    return { bytes: response.body, format };
-  }
+      if (response.statusCode !== 200) {
+        throw new Error(`HTTP ${response.statusCode}`);
+      }
 
-  const maybeConfirmed = await resolveDriveConfirmPage(response);
-  if (maybeConfirmed) {
-    if (maybeConfirmed.statusCode !== 200) {
-      throw new Error(`Google Drive confirm HTTP ${maybeConfirmed.statusCode}`);
+      let format = detectImageFormat(response);
+      if (format) {
+        return { bytes: response.body, format };
+      }
+
+      const maybeConfirmed = await resolveDriveConfirmPage(response);
+      if (maybeConfirmed) {
+        if (maybeConfirmed.statusCode !== 200) {
+          throw new Error(`Google Drive confirm HTTP ${maybeConfirmed.statusCode}`);
+        }
+
+        format = detectImageFormat(maybeConfirmed);
+        if (format) {
+          return { bytes: maybeConfirmed.body, format };
+        }
+
+        response = maybeConfirmed;
+      }
+
+      const meta = await sharp(response.body).metadata().catch(() => null);
+      if (meta && meta.format) {
+        return { bytes: response.body, format: meta.format.toLowerCase() };
+      }
+
+      throw new Error('Unsupported image payload');
+    } catch (error) {
+      errors.push(`${candidate}: ${error.message}`);
     }
-
-    format = detectImageFormat(maybeConfirmed);
-    if (format) {
-      return { bytes: maybeConfirmed.body, format };
-    }
-
-    response = maybeConfirmed;
   }
 
-  const meta = await sharp(response.body).metadata().catch(() => null);
-  if (meta && meta.format) {
-    return { bytes: response.body, format: meta.format.toLowerCase() };
-  }
-
-  throw new Error(`Unsupported or undetected image format for URL: ${normalized}`);
+  throw new Error(`Unsupported or undetected image format. Attempts: ${errors.join(' | ')}`);
 }
 
-async function normalizeImageForPdf(bytes, format) {
+async function normalizeImageForPdf(bytes, format, targetWidth, targetHeight) {
   const normalizedFormat = String(format || '').toLowerCase();
 
-  if (normalizedFormat === 'jpeg' || normalizedFormat === 'png') {
-    return { bytes, format: normalizedFormat };
+  // Many source PNGs contain large transparent/flat margins.
+  // Trim first so the subject fills the PDF card area more reliably.
+  const prepared = await sharp(bytes)
+    .trim()
+    .resize({
+      width: Math.max(1, Math.round(targetWidth)),
+      height: Math.max(1, Math.round(targetHeight)),
+      fit: 'cover',
+      position: 'centre',
+      withoutEnlargement: false,
+    })
+    .flatten({ background: '#ffffff' })
+    .toBuffer()
+    .catch(() => bytes);
+
+  if (normalizedFormat === 'jpeg') {
+    const convertedJpeg = await sharp(prepared).jpeg({ quality: 95 }).toBuffer().catch(() => prepared);
+    return { bytes: convertedJpeg, format: 'jpeg' };
   }
 
-  const converted = await sharp(bytes).png().toBuffer();
-  return { bytes: converted, format: 'png' };
+  const convertedPng = await sharp(prepared).png().toBuffer().catch(() => prepared);
+  return { bytes: convertedPng, format: 'png' };
 }
 
 async function drawExerciseImage(pdfDoc, page, imageUrl, x, yBottom, width, height) {
@@ -401,7 +453,7 @@ async function drawExerciseImage(pdfDoc, page, imageUrl, x, yBottom, width, heig
 
   try {
     const fetched = await fetchImageBytes(imageUrl);
-    const normalized = await normalizeImageForPdf(fetched.bytes, fetched.format);
+    const normalized = await normalizeImageForPdf(fetched.bytes, fetched.format, width, height);
 
     let img;
     if (normalized.format === 'png') {
@@ -410,27 +462,21 @@ async function drawExerciseImage(pdfDoc, page, imageUrl, x, yBottom, width, heig
       img = await pdfDoc.embedJpg(normalized.bytes);
     }
 
-    const scale = Math.min(width / img.width, height / img.height);
-    const drawW = img.width * scale;
-    const drawH = img.height * scale;
-    const drawX = x + (width - drawW) / 2;
-    const drawY = yBottom + (height - drawH) / 2;
-
     page.drawImage(img, {
-      x: drawX,
-      y: drawY,
-      width: drawW,
-      height: drawH,
+      x,
+      y: yBottom,
+      width,
+      height,
     });
   } catch (e) {
     console.warn(`Image render skipped for URL "${imageUrl}": ${e.message}`);
   }
 }
 
-function overlayPage1(pdfDoc, page, { name, calendarUrl, bold }) {
+function overlayPage1(pdfDoc, page, { name, calendarUrl, bold, weekNum }) {
   const nameFontSize = 17;
   const nameText = name || '';
-  const maxNameWidth = 56;
+  const maxNameWidth = 160;
   let displayName = nameText;
 
   while (
@@ -440,23 +486,33 @@ function overlayPage1(pdfDoc, page, { name, calendarUrl, bold }) {
     displayName = displayName.slice(0, -1);
   }
 
-  page.drawRectangle({ x: 143, y: toY(298) - 1, width: 70, height: 4, color: rgb(0.90, 0.89, 0.87) });
-  page.drawRectangle({ x: 208, y: toY(298) - 2, width: 14, height: 8, color: rgb(0.90, 0.89, 0.87) });
+  const isDark = weekNum >= 3;
+  const textColor = isDark ? WHITE : DARK;
+
+  // Week 1: "Welcome" ends at x≈142.5 → name starts at x=150
+  // Weeks 2-4: "Welcome back" ends at x≈187.7 → name starts at x=195
+  const nameX  = weekNum === 1 ? 150 : 195;
+  const coverX = weekNum === 1 ? 143 : 188;
+
+  // Light weeks only: cover hides the blank placeholder; dark weeks: template bg is already dark
+  if (!isDark) {
+    page.drawRectangle({ x: coverX, y: toY(298) - 1, width: 120, height: 22, color: rgb(0.90, 0.89, 0.87) });
+  }
   page.drawText(sanitize(displayName), {
-    x: 150,
+    x: nameX,
     y: toY(298),
     font: bold,
     size: nameFontSize,
-    color: DARK,
+    color: textColor,
   });
 
-  const commaX = 150 + bold.widthOfTextAtSize(sanitize(displayName), nameFontSize) + 4;
+  const commaX = nameX + bold.widthOfTextAtSize(sanitize(displayName), nameFontSize) + 2;
   page.drawText(',', {
     x: commaX,
     y: toY(298),
     font: bold,
     size: nameFontSize,
-    color: DARK,
+    color: textColor,
   });
 
   if (calendarUrl && calendarUrl !== '#') {
@@ -464,8 +520,9 @@ function overlayPage1(pdfDoc, page, { name, calendarUrl, bold }) {
   }
 }
 
-function overlayPage2(page, { profile, regular }) {
+function overlayPage2(page, { profile, bold, weekNum }) {
   const sz = 17;
+  const profileColor = weekNum >= 3 ? WHITE : DARK;
   const entries = [
     { y: toY(108), value: profile.focus || profile.primary_goal || '' },
     { y: toY(150), value: profile.level || '' },
@@ -477,7 +534,7 @@ function overlayPage2(page, { profile, regular }) {
 
   for (const { y, value } of entries) {
     if (value) {
-      page.drawText(sanitize(String(value)), { x: 190, y, font: regular, size: sz, color: DARK });
+      page.drawText(sanitize(String(value)), { x: 190, y, font: bold, size: sz, color: profileColor });
     }
   }
 }
@@ -518,7 +575,7 @@ const SESSIONS_LAYOUT = [
   { rowATop: 490, rowBTop: 658 },
 ];
 
-async function overlaySessionPage(pdfDoc, page, slot1, slot2, fonts) {
+async function overlaySessionPage(pdfDoc, page, slot1, slot2, fonts, weekNum) {
   const slots = [slot1, slot2];
 
   for (let si = 0; si < 2; si++) {
@@ -533,13 +590,16 @@ async function overlaySessionPage(pdfDoc, page, slot1, slot2, fonts) {
 
     for (const { data, rowTop } of rows) {
       if (!data) continue;
-      await overlayExerciseRow(pdfDoc, page, data, rowTop, fonts);
+      await overlayExerciseRow(pdfDoc, page, data, rowTop, fonts, weekNum);
     }
   }
 }
 
-async function overlayExerciseRow(pdfDoc, page, exercise, rowTop, { bold, regular }) {
+async function overlayExerciseRow(pdfDoc, page, exercise, rowTop, { bold, regular }, weekNum) {
   const PAD = 4;
+  const isDark = weekNum >= 3;
+  const mainColor = isDark ? WHITE : DARK;
+  const secColor = isDark ? WHITE_MID : MID;
 
   const imgX = 19 + PAD;
   const imgYBot = toY(rowTop + 160 - PAD);
@@ -557,7 +617,7 @@ async function overlayExerciseRow(pdfDoc, page, exercise, rowTop, { bold, regula
   const col2Width = 432 - col2X - PAD;
   const nameSize = 13;
   const descSize = 11;
-  const cueSize = 9;
+  const cueSize = 11;
   const lineGap = 3;
 
   const nameY = toY(rowTop + PAD + nameSize);
@@ -566,7 +626,7 @@ async function overlayExerciseRow(pdfDoc, page, exercise, rowTop, { bold, regula
     y: nameY,
     font: bold,
     size: nameSize,
-    color: DARK,
+    color: mainColor,
   });
 
   let curY = nameY - nameSize - lineGap - 2;
@@ -581,7 +641,7 @@ async function overlayExerciseRow(pdfDoc, page, exercise, rowTop, { bold, regula
       curY,
       col2Width,
       lineGap,
-      DARK,
+      mainColor,
       rowMinY
     );
   }
@@ -597,21 +657,32 @@ async function overlayExerciseRow(pdfDoc, page, exercise, rowTop, { bold, regula
       curY,
       col2Width,
       lineGap,
-      MID,
+      secColor,
       rowMinY
     );
   }
 
   const col3X = 441 + PAD;
   const col3Width = 576 - col3X - PAD;
-  const col3TopCellMinY = toY(rowTop + 84 - PAD);
+  const col3TopCellMinY = toY(rowTop + 76);  // actual cell boundary from template
 
-  const col3aY = toY(rowTop + PAD + 8);
-  drawWrapped(page, String(exercise.name || ''), bold, 8, col3X, col3aY, col3Width, 3, DARK, col3TopCellMinY);
+  // For dark-themed weeks (3-4) the template background in col3 cells is
+  // a coloured/patterned image → draw a solid dark cover so white text is readable
+  if (isDark) {
+    const darkCover = rgb(0.12, 0.12, 0.12);
+    const col3CoverX = col3X - PAD;   // = 441 (left border of col3)
+    const col3CoverW = 576 - col3CoverX; // = 135
+    page.drawRectangle({ x: col3CoverX, y: toY(rowTop + 76),  width: col3CoverW, height: 76, color: darkCover });
+    page.drawRectangle({ x: col3CoverX, y: toY(rowTop + 160), width: col3CoverW, height: 84, color: darkCover });
+  }
+
+  // Col3 uses same font sizes as col2: bold nameSize for title, regular cueSize for cues
+  const col3aY = toY(rowTop + PAD + nameSize);
+  drawWrapped(page, String(exercise.name || ''), bold, nameSize, col3X, col3aY, col3Width, lineGap, mainColor, col3TopCellMinY);
 
   if (exercise.cues) {
-    const col3bY = toY(rowTop + 84 + PAD + 8);
-    drawWrapped(page, exercise.cues, regular, 8, col3X, col3bY, col3Width, 3, MID, rowMinY);
+    const col3bY = toY(rowTop + 76 + PAD + cueSize);
+    drawWrapped(page, exercise.cues, regular, cueSize, col3X, col3bY, col3Width, lineGap, secColor, rowMinY);
   }
 }
 
@@ -638,11 +709,11 @@ async function overlayWeekPDF({ weekNum, name, profile, weekPlan, calendarUrl, b
   const pages = pdfDoc.getPages();
   const [p1, p2, p3, p4, p5, p6] = pages;
 
-  overlayPage1(pdfDoc, p1, { name, calendarUrl, bold });
-  overlayPage2(p2, { profile, regular });
+  overlayPage1(pdfDoc, p1, { name, calendarUrl, bold, weekNum });
+  overlayPage2(p2, { profile, bold, weekNum });
   if (p3) overlayPage3(p3, { weekPlan, regular });
-  if (p4) await overlaySessionPage(pdfDoc, p4, weekPlan.morning, weekPlan.midday, { bold, regular });
-  if (p5) await overlaySessionPage(pdfDoc, p5, weekPlan.afternoon, weekPlan.evening, { bold, regular });
+  if (p4) await overlaySessionPage(pdfDoc, p4, weekPlan.morning, weekPlan.midday, { bold, regular }, weekNum);
+  if (p5) await overlaySessionPage(pdfDoc, p5, weekPlan.afternoon, weekPlan.evening, { bold, regular }, weekNum);
   if (p6) overlayPage6(pdfDoc, p6, { bonusVideoUrl });
 
   return Buffer.from(await pdfDoc.save());

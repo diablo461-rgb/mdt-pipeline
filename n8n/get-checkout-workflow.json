@@ -1,0 +1,130 @@
+{
+  "id": "aa0e8400-e29b-41d4-a716-446655440005",
+  "name": "Get Checkout URL",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "checkout-redirect",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "GET Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ],
+      "webhookId": "get-checkout-wh"
+    },
+    {
+      "parameters": {
+        "jsCode": "const email = $json.query?.email || '';\nreturn [{ json: { email, query: { email } } }];"
+      },
+      "name": "Extract Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        350,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT checkout_url, paddle_transaction_id\nFROM (\n    WITH first_try AS (\n        SELECT checkout_url, paddle_transaction_id\n        FROM leads\n        WHERE lower(trim(email)) = lower(trim($1))\n          AND (\n              nullif(trim(coalesce(checkout_url, '')), '') IS NOT NULL\n              OR nullif(trim(coalesce(paddle_transaction_id, '')), '') IS NOT NULL\n          )\n        ORDER BY updated_at DESC NULLS LAST\n        LIMIT 1\n    ),\n    pause AS (\n        SELECT pg_sleep(2)\n        WHERE NOT EXISTS (SELECT 1 FROM first_try)\n    ),\n    second_try AS (\n        SELECT checkout_url, paddle_transaction_id\n        FROM leads\n        WHERE lower(trim(email)) = lower(trim($1))\n          AND (\n              nullif(trim(coalesce(checkout_url, '')), '') IS NOT NULL\n              OR nullif(trim(coalesce(paddle_transaction_id, '')), '') IS NOT NULL\n          )\n        ORDER BY updated_at DESC NULLS LAST\n        LIMIT 1\n    )\n    SELECT checkout_url, paddle_transaction_id\n    FROM first_try\n\n    UNION ALL\n\n    SELECT checkout_url, paddle_transaction_id\n    FROM second_try\n    WHERE NOT EXISTS (SELECT 1 FROM first_try)\n      AND EXISTS (SELECT 1 FROM pause)\n\n    LIMIT 1\n) q;",
+        "options": {
+          "queryReplacement": "={{ $json.email || '' }}"
+        }
+      },
+      "name": "Fetch Checkout URL With Retry",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        460,
+        300
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "mdt-pg-cred",
+          "name": "MDT Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const row = $input.first()?.json || {};\nconst checkoutUrl = row.checkout_url || '';\nconst txnId = row.paddle_transaction_id || '';\nconst paddleBaseUrl = ($env.PADDLE_API_URL || '').includes('sandbox')\n  ? 'https://sandbox-buy.paddle.com'\n  : 'https://buy.paddle.com';\nconst fallbackUrl = txnId ? `${paddleBaseUrl}/checkout/${txnId}` : '';\nconst finalUrl = checkoutUrl || fallbackUrl;\nreturn [{\n  json: {\n    redirect_url: finalUrl || 'https://www.microdosing-training.com/payment-error?reason=missing_checkout'\n  }\n}];"
+      },
+      "name": "Build Redirect URL",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        680,
+        450
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "redirect",
+        "redirectURL": "={{ $json.redirect_url }}"
+      },
+      "name": "Redirect to Paddle",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        900,
+        450
+      ]
+    }
+  ],
+  "connections": {
+    "GET Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Email": {
+      "main": [
+        [
+          {
+            "node": "Fetch Checkout URL With Retry",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Checkout URL With Retry": {
+      "main": [
+        [
+          {
+            "node": "Build Redirect URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Redirect URL": {
+      "main": [
+        [
+          {
+            "node": "Redirect to Paddle",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {},
+  "tags": []
+}
