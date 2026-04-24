@@ -22,7 +22,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT id, name, email, user_profile, program_plan,\n  CASE\n    WHEN week1_sent_at IS NOT NULL AND week2_sent_at IS NULL AND week1_sent_at + interval '7 days' <= NOW() THEN 2\n    WHEN week2_sent_at IS NOT NULL AND week3_sent_at IS NULL AND week2_sent_at + interval '7 days' <= NOW() THEN 3\n    WHEN week3_sent_at IS NOT NULL AND week4_sent_at IS NULL AND week3_sent_at + interval '7 days' <= NOW() THEN 4\n  END AS week_to_send\nFROM leads\nWHERE payment_date IS NOT NULL\n  AND (\n    (week1_sent_at IS NOT NULL AND week2_sent_at IS NULL AND week1_sent_at + interval '7 days' <= NOW()) OR\n    (week2_sent_at IS NOT NULL AND week3_sent_at IS NULL AND week2_sent_at + interval '7 days' <= NOW()) OR\n    (week3_sent_at IS NOT NULL AND week4_sent_at IS NULL AND week3_sent_at + interval '7 days' <= NOW())\n  )",
+        "query": "SELECT\n  id,\n  name,\n  email,\n  user_profile,\n  program_plan,\n  CASE\n    WHEN week1_sent_at IS NULL THEN 1\n    WHEN week2_sent_at IS NULL THEN 2\n    WHEN week3_sent_at IS NULL THEN 3\n    WHEN week4_sent_at IS NULL THEN 4\n  END AS week_to_send\nFROM leads\nWHERE payment_date IS NOT NULL\n  AND next_send_at IS NOT NULL\n  AND next_send_at <= NOW()\n  AND week4_sent_at IS NULL;",
         "options": {}
       },
       "name": "Find Due Leads",
@@ -39,12 +39,41 @@
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const lead = $input.item.json;\nconst weekNum = lead.week_to_send;\nconst programPlan = typeof lead.program_plan === 'string' ? JSON.parse(lead.program_plan) : lead.program_plan;\nconst profile = typeof lead.user_profile === 'string' ? JSON.parse(lead.user_profile) : lead.user_profile;\nconst weekPlan = programPlan[`week_${weekNum}`];\n\nconst sessions = ['morning', 'midday', 'afternoon', 'evening'];\nconst weekPlanForPdf = {};\nfor (const s of sessions) {\n  const slot = weekPlan[s] || {};\n  weekPlanForPdf[s] = {\n    warmup: slot.warmup ? {\n      name: slot.warmup.name,\n      description: slot.warmup.description,\n      image_url: slot.warmup.image_url,\n      cues: slot.warmup.cues\n    } : null,\n    main: slot.main ? {\n      name: slot.main.name,\n      description: slot.main.description,\n      image_url: slot.main.image_url,\n      cues: slot.main.cues\n    } : null\n  };\n}\n\nconst calendarMap = {\n  1: $env.CALENDAR_WEEK1_URL || $env.CALENDAR_URL_WEEK1 || $env.CALENDAR_WEEK_1_URL || '',\n  2: $env.CALENDAR_WEEK2_URL || $env.CALENDAR_URL_WEEK2 || $env.CALENDAR_WEEK_2_URL || '',\n  3: $env.CALENDAR_WEEK3_URL || $env.CALENDAR_URL_WEEK3 || $env.CALENDAR_WEEK_3_URL || '',\n  4: $env.CALENDAR_WEEK4_URL || $env.CALENDAR_URL_WEEK4 || $env.CALENDAR_WEEK_4_URL || ''\n};\nconst calendarUrl = calendarMap[weekNum] || $env.CALENDAR_DEFAULT_URL || '';\n\nreturn { json: {\n  lead_id: lead.id,\n  name: lead.name,\n  email: lead.email,\n  week_number: weekNum,\n  week_plan: weekPlanForPdf,\n  profile: profile,\n  calendar_url: calendarUrl\n} };"
+        "jsCode": "const lead = $input.item.json;\nconst weekNum = Number(lead.week_to_send);\nconst programPlan = typeof lead.program_plan === 'string' ? JSON.parse(lead.program_plan) : (lead.program_plan || {});\nconst profile = typeof lead.user_profile === 'string' ? JSON.parse(lead.user_profile) : (lead.user_profile || {});\nconst weekPlan = programPlan[`week_${weekNum}`] || {};\n\nconst sessions = ['morning', 'midday', 'afternoon', 'evening'];\nconst pickImageUrl = (exercise = {}) => exercise.image_url || exercise.imageUrl || exercise.image || exercise.photo_url || exercise.photoUrl || '';\nconst mapExercise = (exercise) => exercise ? {\n  name: exercise.name,\n  description: exercise.description,\n  image_url: pickImageUrl(exercise),\n  cues: exercise.cues\n} : null;\n\nconst weekPlanForPdf = {};\nfor (const s of sessions) {\n  const slot = weekPlan[s] || {};\n  weekPlanForPdf[s] = {\n    warmup: mapExercise(slot.warmup),\n    main: mapExercise(slot.main)\n  };\n}\n\nconst calendarMap = {\n  1: $env.CALENDAR_WEEK1_URL || $env.CALENDAR_URL_WEEK1 || $env.CALENDAR_WEEK_1_URL || '',\n  2: $env.CALENDAR_WEEK2_URL || $env.CALENDAR_URL_WEEK2 || $env.CALENDAR_WEEK_2_URL || '',\n  3: $env.CALENDAR_WEEK3_URL || $env.CALENDAR_URL_WEEK3 || $env.CALENDAR_WEEK_3_URL || '',\n  4: $env.CALENDAR_WEEK4_URL || $env.CALENDAR_URL_WEEK4 || $env.CALENDAR_WEEK_4_URL || ''\n};\nconst calendarUrl = calendarMap[weekNum] || $env.CALENDAR_DEFAULT_URL || '';\n\nreturn { json: {\n  lead_id: lead.id,\n  name: lead.name,\n  email: lead.email,\n  week_number: weekNum,\n  template_key: `week_${weekNum}`,\n  week_plan: weekPlanForPdf,\n  profile: profile,\n  calendar_url: calendarUrl\n} };"
       },
       "name": "Build PDF Payload",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [640, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH picked AS (\n  SELECT subject, html\n  FROM email_templates\n  WHERE template_key = $1 AND is_active = TRUE\n  LIMIT 1\n),\nfallback AS (\n  SELECT subject, html\n  FROM email_templates\n  WHERE template_key = 'week_1' AND is_active = TRUE\n  LIMIT 1\n)\nSELECT\n  COALESCE((SELECT subject FROM picked), (SELECT subject FROM fallback), 'Your MDT Week Plan') AS subject,\n  COALESCE((SELECT html FROM picked), (SELECT html FROM fallback), '<p>Hi {{name}}, your plan is attached.</p>') AS html;",
+        "options": {
+          "queryReplacement": "={{ [$('Build PDF Payload').item.json.template_key] }}"
+        }
+      },
+      "name": "Load Email Template",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [860, 300],
+      "credentials": {
+        "postgres": {
+          "id": "mdt-pg-cred",
+          "name": "MDT Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const payload = $('Build PDF Payload').item.json;\nconst template = $input.item.json;\n\nconst fill = (str, vars) => String(str || '').replace(/{{\\s*([a-zA-Z0-9_]+)\\s*}}/g, (_, key) => vars[key] ?? '');\n\nconst vars = {\n  name: payload.name || 'there',\n  week_number: payload.week_number,\n  calendar_url: payload.calendar_url || '',\n  week_pdf_url: '',\n  level2_offer_url: $env.LEVEL2_OFFER_URL || ''\n};\n\nreturn {\n  json: {\n    lead_id: payload.lead_id,\n    name: payload.name,\n    email: payload.email,\n    week_number: payload.week_number,\n    template_key: payload.template_key,\n    week_plan: payload.week_plan,\n    profile: payload.profile,\n    calendar_url: payload.calendar_url,\n    email_subject: fill(template.subject, vars),\n    email_html: fill(template.html, vars),\n    attachment_filename: `week${payload.week_number}-plan.pdf`\n  }\n};"
+      },
+      "name": "Render Email Template",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1080, 300]
     },
     {
       "parameters": {
@@ -59,7 +88,7 @@
       "name": "Generate PDF",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [860, 300]
+      "position": [1300, 300]
     },
     {
       "parameters": {
@@ -74,36 +103,27 @@
         },
         "sendBody": true,
         "contentType": "json",
-        "body": "={{ JSON.stringify({\n  from: $env.RESEND_FROM,\n  to: [$('Build PDF Payload').item.json.email],\n  subject: 'Your MDT Week ' + $('Build PDF Payload').item.json.week_number + ' Training Plan',\n  html: '<p>Hi ' + $('Build PDF Payload').item.json.name + ',</p><p>Your personalised training plan for Week ' + $('Build PDF Payload').item.json.week_number + ' is attached.</p>' + ($('Build PDF Payload').item.json.week_number === 4 ? '<p>This is your final week — great work completing the programme!</p>' : '<p>See you next week for Week ' + ($('Build PDF Payload').item.json.week_number + 1) + '!</p>') + '<p>— MDT Team</p>',\n  attachments: [{ filename: 'week' + $('Build PDF Payload').item.json.week_number + '-plan.pdf', content: $json.pdf_base64 }]\n}) }}",
+        "specifyBody": "json",
+        "jsonBody": "={{ ({\n  from: $env.RESEND_FROM,\n  to: $('Render Email Template').item.json.email,\n  subject: $('Render Email Template').item.json.email_subject,\n  html: $('Render Email Template').item.json.email_html,\n  attachments: [\n    {\n      filename: $('Render Email Template').item.json.attachment_filename,\n      content: $json.pdf\n    }\n  ]\n}) }}",
         "options": {}
       },
       "name": "Send Email",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1080, 300]
-    },
-    {
-      "parameters": {
-        "mode": "runOnceForEachItem",
-        "jsCode": "const weekNum = $('Build PDF Payload').item.json.week_number;\nconst leadId = $('Build PDF Payload').item.json.lead_id;\nreturn { json: {\n  query: `UPDATE leads SET week${weekNum}_sent_at = NOW(), updated_at = NOW() WHERE id = $1`,\n  lead_id: leadId\n} };"
-      },
-      "name": "Build Update Query",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [1300, 300]
+      "position": [1520, 300]
     },
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "={{ $json.query }}",
+        "query": "UPDATE leads\nSET\n  week1_sent_at = CASE WHEN $2 = 1 THEN NOW() ELSE week1_sent_at END,\n  week2_sent_at = CASE WHEN $2 = 2 THEN NOW() ELSE week2_sent_at END,\n  week3_sent_at = CASE WHEN $2 = 3 THEN NOW() ELSE week3_sent_at END,\n  week4_sent_at = CASE WHEN $2 = 4 THEN NOW() ELSE week4_sent_at END,\n  next_send_at = CASE WHEN $2 < 4 THEN NOW() + interval '7 days' ELSE NULL END,\n  updated_at = NOW()\nWHERE id = $1;",
         "options": {
-          "queryReplacement": "={{ [$json.lead_id] }}"
+          "queryReplacement": "={{ [$('Render Email Template').item.json.lead_id, Number($('Render Email Template').item.json.week_number)] }}"
         }
       },
       "name": "Update sent_at",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
-      "position": [1520, 300],
+      "position": [1740, 300],
       "credentials": {
         "postgres": {
           "id": "mdt-pg-cred",
@@ -139,6 +159,28 @@
       "main": [
         [
           {
+            "node": "Load Email Template",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Email Template": {
+      "main": [
+        [
+          {
+            "node": "Render Email Template",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Render Email Template": {
+      "main": [
+        [
+          {
             "node": "Generate PDF",
             "type": "main",
             "index": 0
@@ -158,17 +200,6 @@
       ]
     },
     "Send Email": {
-      "main": [
-        [
-          {
-            "node": "Build Update Query",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Build Update Query": {
       "main": [
         [
           {

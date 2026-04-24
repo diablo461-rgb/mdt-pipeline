@@ -71,13 +71,13 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $env.PADDLE_API_URL }}/transactions",
+        "url": "={{ $env.PADDLE_API_URL + '/transactions' }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "Authorization",
-              "value": "=Bearer {{ $env.PADDLE_API_KEY }}"
+              "value": "={{ 'Bearer ' + $env.PADDLE_API_KEY }}"
             },
             {
               "name": "Content-Type",

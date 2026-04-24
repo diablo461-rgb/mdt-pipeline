@@ -39,7 +39,7 @@
         "conditions": {
           "boolean": [
             {
-              "value1": "={{ $json.should_process }}",
+              "value1": "={{ $('Verify and Parse Paddle').first().json.should_process }}",
               "value2": true,
               "operation": "equal"
             }
@@ -59,7 +59,7 @@
         "operation": "executeQuery",
         "query": "UPDATE leads\nSET\n  status = 'paid',\n  payment_date = COALESCE($2::timestamp, payment_date, NOW()),\n  paid_amount = COALESCE($3::numeric, paid_amount),\n  paddle_transaction_id = COALESCE(NULLIF($4, ''), paddle_transaction_id),\n  paddle_customer_id = COALESCE(NULLIF($5, ''), paddle_customer_id),\n  updated_at = NOW()\nWHERE email = $1\nRETURNING id, name, email, user_profile",
         "options": {
-          "queryReplacement": "={{ [$json.email, $json.payment_date, $json.paid_amount, $json.transaction_id, $json.customer_id] }}"
+          "queryReplacement": "={{ [\n  $('Verify and Parse Paddle').first().json.email,\n  $('Verify and Parse Paddle').first().json.payment_date,\n  $('Verify and Parse Paddle').first().json.paid_amount,\n  $('Verify and Parse Paddle').first().json.transaction_id,\n  $('Verify and Parse Paddle').first().json.customer_id\n] }}"
         }
       },
       "name": "Mark Lead as Paid",

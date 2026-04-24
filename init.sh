@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS leads (
     tally_payload JSONB,
     user_profile JSONB,
     program_plan JSONB,
+    checkout_url TEXT,
     paddle_transaction_id VARCHAR(255),
     paddle_customer_id VARCHAR(255),
     paid_amount DECIMAL(10,2),
@@ -26,7 +27,8 @@ CREATE TABLE IF NOT EXISTS leads (
     week1_sent_at TIMESTAMP,
     week2_sent_at TIMESTAMP,
     week3_sent_at TIMESTAMP,
-    week4_sent_at TIMESTAMP
+    week4_sent_at TIMESTAMP,
+    next_sent_at TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS idx_leads_email ON leads(email);
