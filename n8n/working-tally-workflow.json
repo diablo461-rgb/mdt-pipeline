@@ -115,7 +115,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "UPDATE leads SET checkout_url = $1, paddle_transaction_id = $2 WHERE email = $3 RETURNING id, email, checkout_url",
+        "query": "UPDATE leads SET checkout_url = $1, paddle_transaction_id = $2, status = 'pending_payment', updated_at = NOW() WHERE email = $3 RETURNING id, email, status, checkout_url, paddle_transaction_id",
         "options": {
           "queryReplacement": "={{ [\n  $('Create Paddle Transaction').first().json.data?.checkout?.url || '',\n  $('Create Paddle Transaction').first().json.data?.id || '',\n  $('Save to PostgreSQL').first().json.email\n] }}"
         }

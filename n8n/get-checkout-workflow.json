@@ -35,7 +35,7 @@
         "operation": "executeQuery",
         "query": "SELECT checkout_url, paddle_transaction_id\nFROM (\n    WITH first_try AS (\n        SELECT checkout_url, paddle_transaction_id\n        FROM leads\n        WHERE lower(trim(email)) = lower(trim($1))\n          AND (\n              nullif(trim(coalesce(checkout_url, '')), '') IS NOT NULL\n              OR nullif(trim(coalesce(paddle_transaction_id, '')), '') IS NOT NULL\n          )\n        ORDER BY updated_at DESC NULLS LAST\n        LIMIT 1\n    ),\n    pause AS (\n        SELECT pg_sleep(2)\n        WHERE NOT EXISTS (SELECT 1 FROM first_try)\n    ),\n    second_try AS (\n        SELECT checkout_url, paddle_transaction_id\n        FROM leads\n        WHERE lower(trim(email)) = lower(trim($1))\n          AND (\n              nullif(trim(coalesce(checkout_url, '')), '') IS NOT NULL\n              OR nullif(trim(coalesce(paddle_transaction_id, '')), '') IS NOT NULL\n          )\n        ORDER BY updated_at DESC NULLS LAST\n        LIMIT 1\n    )\n    SELECT checkout_url, paddle_transaction_id\n    FROM first_try\n\n    UNION ALL\n\n    SELECT checkout_url, paddle_transaction_id\n    FROM second_try\n    WHERE NOT EXISTS (SELECT 1 FROM first_try)\n      AND EXISTS (SELECT 1 FROM pause)\n\n    LIMIT 1\n) q;",
         "options": {
-          "queryReplacement": "={{ $json.email || '' }}"
+          "queryReplacement": "={{ [$json.email || ''] }}"
         }
       },
       "name": "Fetch Checkout URL With Retry",

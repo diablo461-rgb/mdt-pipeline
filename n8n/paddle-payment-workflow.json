@@ -79,13 +79,13 @@
     {
       "parameters": {
         "method": "GET",
-        "url": "https://app.nocodb.com/api/v2/tables/mvi4atz2fcfexfv/records",
+        "url": "={{ 'https://app.nocodb.com/api/v2/tables/' + $env.NOCODB_TABLE_ID + '/records' }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "xc-token",
-              "value": "nc_pat_Gbh0VRL1x3Vjb4UQRWCrXm7Ji81oKkCxeMTKEoP1"
+              "value": "={{ $env.NOCODB_API_TOKEN }}"
             }
           ]
         },
@@ -115,13 +115,13 @@
     {
       "parameters": {
         "method": "GET",
-        "url": "https://app.nocodb.com/api/v2/tables/mvi4atz2fcfexfv/records",
+        "url": "={{ 'https://app.nocodb.com/api/v2/tables/' + $env.NOCODB_TABLE_ID + '/records' }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "xc-token",
-              "value": "nc_pat_Gbh0VRL1x3Vjb4UQRWCrXm7Ji81oKkCxeMTKEoP1"
+              "value": "={{ $env.NOCODB_API_TOKEN }}"
             }
           ]
         },
@@ -151,13 +151,13 @@
     {
       "parameters": {
         "method": "GET",
-        "url": "https://app.nocodb.com/api/v2/tables/mvi4atz2fcfexfv/records",
+        "url": "={{ 'https://app.nocodb.com/api/v2/tables/' + $env.NOCODB_TABLE_ID + '/records' }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "xc-token",
-              "value": "nc_pat_Gbh0VRL1x3Vjb4UQRWCrXm7Ji81oKkCxeMTKEoP1"
+              "value": "={{ $env.NOCODB_API_TOKEN }}"
             }
           ]
         },
@@ -187,13 +187,13 @@
     {
       "parameters": {
         "method": "GET",
-        "url": "https://app.nocodb.com/api/v2/tables/mvi4atz2fcfexfv/records",
+        "url": "={{ 'https://app.nocodb.com/api/v2/tables/' + $env.NOCODB_TABLE_ID + '/records' }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "xc-token",
-              "value": "nc_pat_Gbh0VRL1x3Vjb4UQRWCrXm7Ji81oKkCxeMTKEoP1"
+              "value": "={{ $env.NOCODB_API_TOKEN }}"
             }
           ]
         },
@@ -258,7 +258,7 @@
     {
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const planData = $('Build Program Plan').first().json;\nconst paidLead = $('Mark Lead as Paid').first().json || {};\nconst profileRaw = paidLead.user_profile;\nconst profile = typeof profileRaw === 'string' ? JSON.parse(profileRaw || '{}') : (profileRaw || {});\nconst programPlan = planData.program_plan || {};\nconst weekNum = 1;\nconst weekKey = 'week_1';\nconst weekPlan = programPlan[weekKey] || {};\n\nconst sessions = ['morning', 'midday', 'afternoon', 'evening'];\nconst weekPlanForPdf = {};\nfor (const s of sessions) {\n  const slot = weekPlan[s] || {};\n  weekPlanForPdf[s] = {\n    warmup: slot.warmup ? {\n      name: slot.warmup.name,\n      description: slot.warmup.description,\n      image_url: slot.warmup.image_url || slot.warmup.imageUrl || slot.warmup.image || slot.warmup.photo_url || slot.warmup.photoUrl || '',\n      cues: slot.warmup.cues\n    } : null,\n    main: slot.main ? {\n      name: slot.main.name,\n      description: slot.main.description,\n      image_url: slot.main.image_url || slot.main.imageUrl || slot.main.image || slot.main.photo_url || slot.main.photoUrl || '',\n      cues: slot.main.cues\n    } : null\n  };\n}\n\nconst calendarMap = {\n  1: $env.CALENDAR_WEEK1_URL || $env.CALENDAR_URL_WEEK1 || $env.CALENDAR_WEEK_1_URL || '',\n  2: $env.CALENDAR_WEEK2_URL || $env.CALENDAR_URL_WEEK2 || $env.CALENDAR_WEEK_2_URL || '',\n  3: $env.CALENDAR_WEEK3_URL || $env.CALENDAR_URL_WEEK3 || $env.CALENDAR_WEEK_3_URL || '',\n  4: $env.CALENDAR_WEEK4_URL || $env.CALENDAR_URL_WEEK4 || $env.CALENDAR_WEEK_4_URL || ''\n};\n\nreturn [{\n  json: {\n    name: paidLead.name || 'there',\n    email: paidLead.email,\n    week_number: weekNum,\n    template_key: weekKey,\n    week_plan: weekPlanForPdf,\n    profile,\n    calendar_url: calendarMap[weekNum] || $env.CALENDAR_DEFAULT_URL || ''\n  }\n}];"
+        "jsCode": "const planData = $('Build Program Plan').first().json;\nconst paidLead = $('Mark Lead as Paid').first().json || {};\nconst profileRaw = paidLead.user_profile;\nconst profile = typeof profileRaw === 'string' ? JSON.parse(profileRaw || '{}') : (profileRaw || {});\nconst programPlan = planData.program_plan || {};\nconst weekNum = 1;\nconst weekKey = 'week_1';\nconst weekPlan = programPlan[weekKey] || {};\n\nconst sessions = ['morning', 'midday', 'afternoon', 'evening'];\nconst weekPlanForPdf = {};\nfor (const s of sessions) {\n  const slot = weekPlan[s] || {};\n  weekPlanForPdf[s] = {\n    warmup: slot.warmup ? {\n      name: slot.warmup.name,\n      description: slot.warmup.description,\n      image_url: slot.warmup.image_url || slot.warmup.imageUrl || slot.warmup.image || slot.warmup.photo_url || slot.warmup.photoUrl || '',\n      cues: slot.warmup.cues\n    } : null,\n    main: slot.main ? {\n      name: slot.main.name,\n      description: slot.main.description,\n      image_url: slot.main.image_url || slot.main.imageUrl || slot.main.image || slot.main.photo_url || slot.main.photoUrl || '',\n      cues: slot.main.cues\n    } : null\n  };\n}\n\nconst calendarMap = {\n  1: $env.CALENDAR_WEEK1_URL || '',\n  2: $env.CALENDAR_WEEK2_URL || '',\n  3: $env.CALENDAR_WEEK3_URL || '',\n  4: $env.CALENDAR_WEEK4_URL || ''\n};\n\nreturn [{\n  json: {\n    name: paidLead.name || 'there',\n    email: paidLead.email,\n    week_number: weekNum,\n    template_key: weekKey,\n    week_plan: weekPlanForPdf,\n    profile,\n    calendar_url: calendarMap[weekNum] || $env.CALENDAR_DEFAULT_URL || ''\n  }\n}];"
       },
       "name": "Build PDF Payload",
       "type": "n8n-nodes-base.code",
@@ -446,7 +446,7 @@
         "operation": "executeQuery",
         "query": "INSERT INTO payment_events (event_id, event_type, lead_id, email, transaction_id, raw_payload)\nSELECT $1, $2, l.id, $3, $4, $5::jsonb\nFROM leads l WHERE l.email = $3\nON CONFLICT (event_id) DO NOTHING",
         "options": {
-          "queryReplacement": "={{ [\n  $('Verify and Parse Paddle').first().json.event_id,\n  $('Verify and Parse Paddle').first().json.event_type,\n  $('Verify and Parse Paddle').first().json.email,\n  $('Verify and Parse Paddle').first().json.transaction_id,\n  JSON.stringify({ event_type: $('Verify and Parse Paddle').first().json.event_type, email: $('Verify and Parse Paddle').first().json.email })\n] }}"
+          "queryReplacement": "={{ [\n  $('Verify and Parse Paddle').first().json.event_id,\n  $('Verify and Parse Paddle').first().json.event_type,\n  $('Verify and Parse Paddle').first().json.email,\n  $('Verify and Parse Paddle').first().json.transaction_id,\n  JSON.stringify($('Paddle Webhook').first().json.body || {})\n] }}"
         }
       },
       "name": "Record Payment Event",

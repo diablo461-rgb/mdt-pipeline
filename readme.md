@@ -10,8 +10,9 @@
 ```
 mdt-pipeline/
 ├── compose.yml                          # Docker: n8n + PostgreSQL + pdf-service
-├── init.sql                             # Схема БД (применяется автоматически)
-├── init.sh                              # Инициализация второй БД (n8n_db)
+├── init.sh                              # Инициализация БД: n8n_db + схема mdt_db
+├── migrations/
+│   └── 001_align_schema_with_workflows.sql # Миграция для уже существующих БД
 ├── Dockerfile.n8n                       # n8n с автоимпортом workflow и кредешналов
 ├── .env                                 # Секреты (не в git)
 ├── _env.example                         # Шаблон .env
@@ -64,7 +65,7 @@ open http://localhost:5678
 > Если Safari блокирует cookies: поставь `N8N_SECURE_COOKIE=false` в `.env`
 
 При первом старте:
-- Контейнер PostgreSQL применяет `init.sql` (создаёт таблицы, индексы, email-шаблоны по умолчанию)
+- Контейнер PostgreSQL применяет `init.sh` (создаёт `n8n_db`, таблицы, индексы, email-шаблоны по умолчанию)
 - Контейнер n8n импортирует кредешнал MDT Postgres и все 4 workflow, активирует их автоматически
 
 ---
@@ -216,6 +217,35 @@ END AS week_to_send
 | `week4_sent_at`       | TIMESTAMP    | Дата отправки письма недели 4         |
 | `next_send_at`        | TIMESTAMP    | Следующая запланированная отправка    |
 | `status`              | VARCHAR(50)  | Статус лида (default: `new`)          |
+| `created_at`          | TIMESTAMP    | Время создания записи                 |
+| `updated_at`          | TIMESTAMP    | Время последнего обновления           |
+
+Индексы/ограничения, используемые workflow:
+- `UNIQUE (email)` для `ON CONFLICT (email)`
+- `idx_leads_email` на `leads(email)`
+- `idx_leads_next_send_at` на `leads(next_send_at)`
+- `idx_leads_paddle_transaction_id` на `leads(paddle_transaction_id)`
+
+### Таблица `payment_events`
+
+Используется для idempotency и аудита Paddle webhook событий.
+
+| Поле               | Тип          | Описание                                  |
+|--------------------|--------------|-------------------------------------------|
+| `id`               | SERIAL PK    |                                           |
+| `event_id`         | VARCHAR(255) | Уникальный ID события Paddle              |
+| `event_type`       | VARCHAR(100) | Тип события                               |
+| `lead_id`          | INTEGER      | FK на `leads(id)`                         |
+| `email`            | VARCHAR(255) | Email из payload                          |
+| `transaction_id`   | VARCHAR(255) | ID транзакции Paddle                      |
+| `processed_at`     | TIMESTAMP    | Время обработки события                   |
+| `raw_payload`      | JSONB        | Полный raw payload webhook события        |
+
+Индексы/ограничения:
+- `UNIQUE (event_id)`
+- `idx_payment_events_event_id` на `payment_events(event_id)`
+- `idx_payment_events_transaction_id` на `payment_events(transaction_id)`
+- `idx_payment_events_email` на `payment_events(email)`
 
 ### Таблица `email_templates`
 
@@ -489,23 +519,9 @@ PADDLE_WEBHOOK_SECRET=pdl_ntfset_xxxxxxxxxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ### Шаг 8 — Применить миграцию БД (если нужно)
 
 ```bash
-# Добавить колонку checkout_url к существующей таблице leads:
-docker compose exec postgres psql -U mdt_user -d mdt_db -c "
-ALTER TABLE leads ADD COLUMN IF NOT EXISTS checkout_url TEXT;
-ALTER TABLE leads ADD COLUMN IF NOT EXISTS paddle_transaction_id VARCHAR(255);
-
-CREATE TABLE IF NOT EXISTS payment_events (
-    id SERIAL PRIMARY KEY,
-    event_id VARCHAR(255) UNIQUE NOT NULL,
-    event_type VARCHAR(100) NOT NULL,
-    lead_id INTEGER REFERENCES leads(id) ON DELETE SET NULL,
-    email VARCHAR(255),
-    transaction_id VARCHAR(255),
-    processed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    raw_payload JSONB
-);
-CREATE INDEX IF NOT EXISTS idx_payment_events_event_id ON payment_events(event_id);
-"
+# Для уже существующей БД (где volume уже инициализирован):
+docker compose exec -T postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
+  < migrations/001_align_schema_with_workflows.sql
 ```
 
 ### Шаг 9 — Перезапустить стек
