@@ -1,0 +1,13 @@
+# Secrets — never in git
+.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# VS Code / IDE
+.vscode/
+.idea/
+
+# Node dependencies
+node_modules/
