@@ -47,16 +47,35 @@ function postJson(url, body) {
   });
 }
 
-// ─── Helper: PG query via psql ────────────────────────────────────────────────
-const { execSync } = require('child_process');
+// ─── Helper: PG query via psql (uses -f flag with a temp file to avoid shell injection) ─
+const { execSync, execFileSync } = require('child_process');
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
+
 function pgQuery(sql) {
   const user = process.env.POSTGRES_USER || 'mdt_user';
   const pass = process.env.POSTGRES_PASSWORD || '';
   const db   = process.env.POSTGRES_DB || 'mdt_db';
   const host = process.env.POSTGRES_HOST || 'localhost';
   const port = process.env.POSTGRES_PORT || '5432';
-  const cmd  = `PGPASSWORD="${pass}" psql -h ${host} -p ${port} -U ${user} -d ${db} -t -c "${sql.replace(/"/g, '\\"')}"`;
-  return execSync(cmd, { encoding: 'utf8' }).trim();
+  // Write SQL to a temp file to avoid any shell-quoting issues
+  const tmpFile = path.join(os.tmpdir(), `mdt_sim_${process.pid}_${Date.now()}.sql`);
+  try {
+    fs.writeFileSync(tmpFile, sql, 'utf8');
+    return execFileSync(
+      'psql',
+      ['-h', host, '-p', port, '-U', user, '-d', db, '-t', '-f', tmpFile],
+      { encoding: 'utf8', env: { ...process.env, PGPASSWORD: pass } }
+    ).trim();
+  } finally {
+    try { fs.unlinkSync(tmpFile); } catch (_) { /* ignore */ }
+  }
+}
+
+// ─── Safe SQL literal escaping (single-quotes and backslashes) ────────────────
+function pgLiteral(value) {
+  return "'" + String(value).replace(/\\/g, '\\\\').replace(/'/g, "''") + "'";
 }
 
 // ─── 10 diverse profiles ──────────────────────────────────────────────────────
@@ -99,14 +118,14 @@ async function main() {
     const { program_plan } = genRes.body;
 
     // 2) Insert/update lead
-    const upsertSql = `
-      INSERT INTO leads (name, email, user_profile, status)
-      VALUES ('${name}', '${email}', '${JSON.stringify(userProfile).replace(/'/g,"''")}', 'paid')
-      ON CONFLICT (email) DO UPDATE
-        SET name = EXCLUDED.name, user_profile = EXCLUDED.user_profile,
-            status = 'paid', updated_at = NOW()
-      RETURNING id
-    `.replace(/\n/g, ' ');
+    const upsertSql = [
+      'INSERT INTO leads (name, email, user_profile, status)',
+      `VALUES (${pgLiteral(name)}, ${pgLiteral(email)}, ${pgLiteral(JSON.stringify(userProfile))}::jsonb, 'paid')`,
+      'ON CONFLICT (email) DO UPDATE',
+      '  SET name = EXCLUDED.name, user_profile = EXCLUDED.user_profile,',
+      "      status = 'paid', updated_at = NOW()",
+      'RETURNING id',
+    ].join(' ');
     try {
       pgQuery(upsertSql);
       results.inserted++;
@@ -116,10 +135,10 @@ async function main() {
     }
 
     // 3) Save program_plan
-    const saveSql = `
-      UPDATE leads SET program_plan = '${JSON.stringify(program_plan).replace(/'/g,"''")}', updated_at = NOW()
-      WHERE email = '${email}'
-    `.replace(/\n/g, ' ');
+    const saveSql = [
+      `UPDATE leads SET program_plan = ${pgLiteral(JSON.stringify(program_plan))}::jsonb, updated_at = NOW()`,
+      `WHERE email = ${pgLiteral(email)}`,
+    ].join(' ');
     try {
       pgQuery(saveSql);
       results.saved++;
@@ -140,9 +159,9 @@ async function main() {
     }
     if (contractOk) results.valid++;
 
-    // 5) Uniqueness
-    const hash = JSON.stringify(Object.keys(program_plan.week_1).map(s => program_plan.week_1[s].main?.ex_id));
-    planHashes.add(hash);
+    // 5) Uniqueness (by week_1 main exercise IDs)
+    const planSignature = JSON.stringify(Object.keys(program_plan.week_1).map(s => program_plan.week_1[s].main?.ex_id));
+    planHashes.add(planSignature);
 
     // 6) Generate PDF for week 1
     const weekPlan = program_plan.week_1;

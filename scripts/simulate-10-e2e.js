@@ -74,7 +74,7 @@ function buildTallyPayload(profile) {
 // ─── Build a Paddle transaction.completed event with HMAC signature ───────────
 function buildPaddleEvent(email, transactionId) {
   const event = {
-    event_id:   `evt_sim_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+    event_id:   `evt_sim_${crypto.randomUUID()}`,
     event_type: 'transaction.completed',
     data: {
       id:       transactionId,
