@@ -1,7 +1,7 @@
 # MDT Pipeline
 
 Полная автоматизация доставки персонализированных PDF-планов тренировок:
-**Tally quiz → n8n → PostgreSQL → Paddle Checkout → pdf-service → Resend → Email**
+**Tally quiz → n8n → PostgreSQL → Paddle Checkout → program-service → pdf-service → Resend → Email**
 
 ---
 
@@ -9,7 +9,7 @@
 
 ```
 mdt-pipeline/
-├── compose.yml                          # Docker: n8n + PostgreSQL + pdf-service
+├── compose.yml                          # Docker: n8n + PostgreSQL + pdf-service + program-service
 ├── init.sh                              # Инициализация БД: n8n_db + схема mdt_db
 ├── migrations/
 │   └── 001_align_schema_with_workflows.sql # Миграция для уже существующих БД
@@ -19,7 +19,7 @@ mdt-pipeline/
 ├── n8n/
 │   ├── working-tally-workflow.json      # Tally → PostgreSQL + Paddle transaction creation
 │   ├── get-checkout-workflow.json       # GET /checkout-redirect → DB lookup + HTTP redirect на checkout URL
-│   ├── paddle-payment-workflow.json     # Paddle webhook → payment verification → week1 send
+│   ├── paddle-payment-workflow.json     # Paddle webhook → payment verification → program-service → week1 send
 │   └── weekly-sender-workflow.json      # MDT Weekly PDF Sender
 ├── pdf-service/
 │   ├── Dockerfile
@@ -32,6 +32,22 @@ mdt-pipeline/
 │   │   ├── week3.pdf                    # Reference PDF — неделя 3 (тёмная тема)
 │   │   └── week4.pdf                    # Reference PDF — неделя 4 (тёмная тема)
 │   └── package.json
+├── program-service/
+│   ├── Dockerfile
+│   ├── server.js                        # Express API: POST /generate-program, GET /health
+│   ├── planner.js                       # Логика подбора упражнений (4-недельный план)
+│   ├── nocodb.js                        # Загрузка упражнений из NocoDB
+│   ├── rules/
+│   │   ├── slot-body-focus.js           # Приоритеты body_focus по слотам
+│   │   ├── goal-fallbacks.js            # Fallback-цепочки для primary_goal
+│   │   ├── level-progression.js         # Прогрессия уровней по неделям
+│   │   ├── space-equipment-maps.js      # Маппинг space/equipment
+│   │   └── contra-filters.js           # Фильтрация по contraindications
+│   └── package.json
+├── scripts/
+│   ├── simulate-10-programs.js          # Интеграционный тест: 10 профилей → plan + DB + PDF
+│   ├── simulate-10-e2e.js               # E2E тест через n8n webhooks
+│   └── README.md
 └── PDF MDT * week..pdf                  # Оригинальные дизайн-шаблоны
 ```
 
@@ -39,11 +55,12 @@ mdt-pipeline/
 
 ## Сервисы
 
-| Сервис      | Порт | Описание                             |
-|-------------|------|--------------------------------------|
-| n8n         | 5678 | Workflow-автоматизация               |
-| PostgreSQL  | 5432 | База данных лидов и email-шаблонов   |
-| pdf-service | 3001 | Генерация персонализированных PDF    |
+| Сервис          | Порт | Описание                                    |
+|-----------------|------|---------------------------------------------|
+| n8n             | 5678 | Workflow-автоматизация                      |
+| PostgreSQL       | 5432 | База данных лидов и email-шаблонов          |
+| pdf-service     | 3001 | Генерация персонализированных PDF           |
+| program-service | 3002 | Генерация персонализированных планов (4 нед)|
 
 ---
 
@@ -158,9 +175,21 @@ Tally (квиз) → POST /webhook/tally-webhook
 - Проверяет подпись Paddle (`Paddle-Signature`) через `PADDLE_WEBHOOK_SECRET` и отклоняет невалидные/нерелевантные события
 - На подтверждённом событии оплаты:
   - обновляет лида (`status = paid`, `payment_date`, `paid_amount`, `paddle_transaction_id`, `paddle_customer_id`)
-  - генерирует персональный `program_plan`
+  - вызывает `program-service` (`POST /generate-program`) с `user_profile` лида → получает `program_plan`
+  - сохраняет `program_plan` в `leads`
   - собирает и отправляет Week 1 PDF по email
   - ставит `week1_sent_at = NOW()` и `next_send_at = NOW() + 7 days`
+
+**Цепочка узлов:**
+```
+Paddle Webhook → Verify and Parse Paddle → Check Idempotency → Is Not Duplicate
+  → Is Verified Paid Event → Mark Lead as Paid → Record Payment Event
+  → Generate Program (HTTP POST → program-service:3002/generate-program)
+  → Save Program (UPDATE leads SET program_plan = ...)
+  → Build PDF Payload → Load Email Template → Render Email Template
+  → Generate PDF (HTTP POST → pdf-service:3001/generate-pdf)
+  → Send Email Week 1 → Update week1_sent_at → Send Success Response
+```
 
 ### 4. MDT Weekly PDF Sender (`weekly-sender-workflow.json`)
 
@@ -383,6 +412,98 @@ curl -s -X POST http://localhost:3001/generate-pdf \
   | python3 -c "import sys,json,base64; d=json.load(sys.stdin); open('/tmp/test.pdf','wb').write(base64.b64decode(d['pdf']))"
 open /tmp/test.pdf
 ```
+
+---
+
+## Program Service
+
+Микросервис генерации персонализированных 4-недельных планов тренировок.  
+Вынесен из n8n в отдельный сервис для модульности и тестируемости.
+
+### API
+
+```
+GET  /health              → { ok: true, service: "mdt-program-service" }
+POST /generate-program    → { program_plan: { week_1..week_4 }, email }
+```
+
+### Тело запроса `/generate-program`
+
+```json
+{
+  "user_profile": {
+    "primary_goal": "energy",
+    "level": "beginner",
+    "space": "indoor",
+    "equipment": "none",
+    "movement_type": "mix",
+    "contraindications": [],
+    "sleep_bucket": "normal"
+  },
+  "email": "user@example.com"
+}
+```
+
+Ответ: `{ "program_plan": { "week_1": { "morning": {...}, ... }, ... }, "email": "..." }`
+
+Каждый слот: `{ "warmup": Exercise | null, "main": Exercise | null }`
+
+### Тест генерации плана
+
+```bash
+curl -s -X POST http://localhost:3002/generate-program \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_profile": {
+      "primary_goal": "energy",
+      "level": "beginner",
+      "space": "indoor",
+      "equipment": "none",
+      "movement_type": "mix",
+      "contraindications": []
+    },
+    "email": "test@example.com"
+  }' | python3 -m json.tool | head -40
+```
+
+### Проверка здоровья сервисов
+
+```bash
+curl -s http://localhost:3001/health   # pdf-service
+curl -s http://localhost:3002/health   # program-service
+curl -s http://localhost:5678          # n8n UI
+```
+
+---
+
+## Скрипты симуляции
+
+### simulate-10-programs.js — интеграционный тест
+
+Генерирует планы для 10 разных профилей через `program-service`, сохраняет в Postgres и проверяет PDF:
+
+```bash
+node scripts/simulate-10-programs.js
+```
+
+Ожидаемый результат:
+```
+Leads inserted/updated:          10/10
+Program plans saved to leads:    10/10
+Program plan contract valid:     10/10
+Unique program plans (hashes):   10/10
+PDF generated (base64 %PDF):     10/10
+```
+
+### simulate-10-e2e.js — E2E через n8n webhooks
+
+Отправляет Tally-webhook и Paddle-webhook для 10 профилей:
+
+```bash
+PADDLE_WEBHOOK_SECRET=your_secret node scripts/simulate-10-e2e.js
+```
+
+> **Примечание:** требует активированных workflows в n8n UI. При 404 — активируй workflows вручную.
 
 ---
 
