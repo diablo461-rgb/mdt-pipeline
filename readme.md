@@ -9,7 +9,7 @@
 
 ```
 mdt-pipeline/
-├── compose.yml                          # Docker: n8n + PostgreSQL + pdf-service
+├── compose.yml                          # Docker: n8n + PostgreSQL + pdf-service + program-service
 ├── init.sh                              # Инициализация БД: n8n_db + схема mdt_db
 ├── migrations/
 │   └── 001_align_schema_with_workflows.sql # Миграция для уже существующих БД
@@ -32,6 +32,13 @@ mdt-pipeline/
 │   │   ├── week3.pdf                    # Reference PDF — неделя 3 (тёмная тема)
 │   │   └── week4.pdf                    # Reference PDF — неделя 4 (тёмная тема)
 │   └── package.json
+├── program-service/
+│   ├── Dockerfile
+│   ├── server.js                        # Express API: POST /generate-program, GET /health
+│   ├── planner.js                       # Логика подбора упражнений (вынесена из n8n)
+│   ├── nocodb.js                        # Пагинированная загрузка упражнений из NocoDB
+│   ├── rules/                           # Таблицы и фильтры правил подбора
+│   └── package.json
 └── PDF MDT * week..pdf                  # Оригинальные дизайн-шаблоны
 ```
 
@@ -44,6 +51,7 @@ mdt-pipeline/
 | n8n         | 5678 | Workflow-автоматизация               |
 | PostgreSQL  | 5432 | База данных лидов и email-шаблонов   |
 | pdf-service | 3001 | Генерация персонализированных PDF    |
+| program-service | 3002 | Генерация `program_plan` для 4 недель |
 
 ---
 
@@ -119,7 +127,7 @@ Tally (квиз) → POST /webhook/tally-webhook
         → Пользователь оплачивает
           → Paddle: POST /webhook/paddle-webhook (transaction.completed)
             → n8n: верифицирует подпись, обновляет лида (status = paid)
-            → n8n: генерирует program_plan, создаёт Week 1 PDF
+            → n8n: запрашивает `program-service` для program_plan, создаёт Week 1 PDF
             → n8n: отправляет email через Resend
 ```
 
@@ -134,9 +142,10 @@ Tally (квиз) → POST /webhook/tally-webhook
 
 - **Триггер:** `POST /webhook/tally-webhook`
 - Парсит ответы квиза, сохраняет/обновляет лида в `leads` со статусом `pending_payment`
+- Валидирует Paddle-конфиг перед API вызовом (`Validate Paddle Config`)
 - Создаёт транзакцию Paddle через API (`POST /transactions` к `PADDLE_API_URL`)
 - Сохраняет `checkout_url` и `paddle_transaction_id` в запись лида
-- Узлы: Webhook → Parse Tally → Build DB Record → Save Lead → Create Paddle Transaction → Save Checkout URL
+- Узлы: Webhook → Parse Tally → Build DB Record → Save Lead → Validate Paddle Config → Create Paddle Transaction → Save Checkout URL
 
 ### 2. Checkout redirect (`get-checkout-workflow.json`)
 
@@ -158,9 +167,11 @@ Tally (квиз) → POST /webhook/tally-webhook
 - Проверяет подпись Paddle (`Paddle-Signature`) через `PADDLE_WEBHOOK_SECRET` и отклоняет невалидные/нерелевантные события
 - На подтверждённом событии оплаты:
   - обновляет лида (`status = paid`, `payment_date`, `paid_amount`, `paddle_transaction_id`, `paddle_customer_id`)
-  - генерирует персональный `program_plan`
+  - генерирует персональный `program_plan` через `program-service` (`Generate Program`)
   - собирает и отправляет Week 1 PDF по email
   - ставит `week1_sent_at = NOW()` и `next_send_at = NOW() + 7 days`
+
+**Важно для `Generate Program`:** `user_profile` из `Mark Lead as Paid` может прийти как `jsonb`-object, JSON-string, `null` или пустое значение. Workflow теперь безопасно нормализует его в object и не делает прямой `JSON.parse(undefined)`.
 
 ### 4. MDT Weekly PDF Sender (`weekly-sender-workflow.json`)
 
@@ -191,6 +202,48 @@ END AS week_to_send
 ```
 
 После отправки недели 4 поле `next_send_at` становится `NULL` (отправки прекращаются).
+
+---
+
+## Ошибка 403 в `Create Paddle Transaction`
+
+Если в n8n видно `403 forbidden` от Paddle, обычно это проблема конфигурации ключей/окружения, а не формат JSON body.
+
+Проверить обязательно:
+- `PADDLE_API_KEY` = server-side API key (`pdl_sdbx_*` или `pdl_live_*`)
+- `PADDLE_API_URL` соответствует ключу:
+  - `pdl_sdbx_*` -> `https://sandbox-api.paddle.com`
+  - `pdl_live_*` -> `https://api.paddle.com`
+- `PADDLE_PRICE_ID` начинается с `pri_` и создан в том же окружении, что и ключ
+
+Что уже сделано в workflow:
+- Добавлен узел `Validate Paddle Config` перед `Create Paddle Transaction`.
+- Узел валидирует формат ключа, URL, `price_id` и sandbox/live соответствие.
+- `Create Paddle Transaction` использует только провалидированные значения.
+
+Быстрый smoke test Paddle API:
+
+```bash
+cd /Users/aleksejkazakov/mdt-pipeline
+set -a
+source .env
+set +a
+
+curl -sS -o /tmp/paddle_txn_check.json -w "%{http_code}\n" \
+  -X POST "${PADDLE_API_URL%/}/transactions" \
+  -H "Authorization: Bearer $PADDLE_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "Paddle-Version: 1" \
+  -d '{
+    "items":[{"price_id":"'"$PADDLE_PRICE_ID"'","quantity":1}],
+    "customer":{"email":"smoke-test@example.com"},
+    "custom_data":{"source":"manual-smoke-test"}
+  }'
+
+cat /tmp/paddle_txn_check.json
+```
+
+Ожидаемо: HTTP `201` и поля `data.id` + `data.checkout.url`.
 
 ---
 

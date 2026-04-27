@@ -70,25 +70,42 @@
     },
     {
       "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const key = String($env.PADDLE_API_KEY || '').trim();\nconst rawUrl = String($env.PADDLE_API_URL || '').trim();\nconst priceId = String($env.PADDLE_PRICE_ID || '').trim();\n\nif (!key) {\n  throw new Error('PADDLE_API_KEY is empty. Set server-side Paddle API key (pdl_sdbx_* or pdl_live_*).');\n}\nif (!rawUrl) {\n  throw new Error('PADDLE_API_URL is empty. Use https://sandbox-api.paddle.com or https://api.paddle.com');\n}\nif (!priceId) {\n  throw new Error('PADDLE_PRICE_ID is empty. Set pri_* from Paddle Catalog.');\n}\nif (!priceId.startsWith('pri_')) {\n  throw new Error(`PADDLE_PRICE_ID must start with pri_. Got: ${priceId}`);\n}\n\nif (key.startsWith('test_') || key.startsWith('live_')) {\n  throw new Error('Wrong Paddle token type in PADDLE_API_KEY. Use API key (pdl_sdbx_* / pdl_live_*), not client-side token (test_*/live_*).');\n}\nif (!(key.startsWith('pdl_sdbx_') || key.startsWith('pdl_live_'))) {\n  throw new Error('Unexpected PADDLE_API_KEY format. Expected pdl_sdbx_* or pdl_live_*.');\n}\n\nconst apiUrl = rawUrl.replace(/\\/+$/, '');\nconst isSandboxUrl = apiUrl.includes('sandbox-api.paddle.com');\nconst isProdUrl = apiUrl.includes('api.paddle.com') && !isSandboxUrl;\n\nif (!(isSandboxUrl || isProdUrl)) {\n  throw new Error(`Unsupported PADDLE_API_URL: ${apiUrl}. Use https://sandbox-api.paddle.com or https://api.paddle.com`);\n}\nif (key.startsWith('pdl_sdbx_') && !isSandboxUrl) {\n  throw new Error('Environment mismatch: sandbox API key requires PADDLE_API_URL=https://sandbox-api.paddle.com');\n}\nif (key.startsWith('pdl_live_') && !isProdUrl) {\n  throw new Error('Environment mismatch: live API key requires PADDLE_API_URL=https://api.paddle.com');\n}\n\nreturn [{\n  json: {\n    paddle_api_key: key,\n    paddle_api_url: apiUrl,\n    paddle_price_id: priceId\n  }\n}];"
+      },
+      "name": "Validate Paddle Config",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1020,
+        300
+      ]
+    },
+    {
+      "parameters": {
         "method": "POST",
-        "url": "={{ $env.PADDLE_API_URL + '/transactions' }}",
+        "url": "={{ $('Validate Paddle Config').first().json.paddle_api_url + '/transactions' }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "Authorization",
-              "value": "={{ 'Bearer ' + $env.PADDLE_API_KEY }}"
+              "value": "={{ 'Bearer ' + $('Validate Paddle Config').first().json.paddle_api_key }}"
             },
             {
               "name": "Content-Type",
               "value": "application/json"
+            },
+            {
+              "name": "Paddle-Version",
+              "value": "1"
             }
           ]
         },
         "sendBody": true,
         "contentType": "json",
         "specifyBody": "json",
-        "jsonBody": "={{ ({\n  items: [{ price_id: $env.PADDLE_PRICE_ID, quantity: 1 }],\n  customer: { email: $('Save to PostgreSQL').first().json.email },\n  custom_data: {\n    email: $('Save to PostgreSQL').first().json.email,\n    lead_id: String($('Save to PostgreSQL').first().json.id || '')\n  }\n}) }}",
+        "jsonBody": "={{ ({\n  items: [{ price_id: $('Validate Paddle Config').first().json.paddle_price_id, quantity: 1 }],\n  customer: { email: $('Save to PostgreSQL').first().json.email },\n  custom_data: {\n    email: $('Save to PostgreSQL').first().json.email,\n    lead_id: String($('Save to PostgreSQL').first().json.id || '')\n  }\n}) }}",
         "options": {}
       },
       "name": "Create Paddle Transaction",
@@ -170,6 +187,17 @@
       ]
     },
     "Save to PostgreSQL": {
+      "main": [
+        [
+          {
+            "node": "Validate Paddle Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Paddle Config": {
       "main": [
         [
           {

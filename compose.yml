@@ -30,6 +30,8 @@ services:
         condition: service_healthy
       pdf-service:
         condition: service_healthy
+      program-service:
+        condition: service_healthy
     ports:
       - "5678:5678"
     environment:
@@ -112,6 +114,25 @@ services:
       NOCODB_TABLE_ID: ${NOCODB_TABLE_ID:-mvi4atz2fcfexfv}
     healthcheck:
       test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:3001/health', r => process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))\""]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  program-service:
+    build:
+      context: ./program-service
+      dockerfile: Dockerfile
+    container_name: mdt_program_service
+    restart: unless-stopped
+    ports:
+      - "3002:3002"
+    environment:
+      PORT: 3002
+      NOCODB_API_TOKEN: ${NOCODB_API_TOKEN}
+      NOCODB_TABLE_ID: ${NOCODB_TABLE_ID:-mvi4atz2fcfexfv}
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:3002/health', r => process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))\""]
       interval: 15s
       timeout: 10s
       retries: 5
