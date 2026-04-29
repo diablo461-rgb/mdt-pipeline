@@ -167,7 +167,7 @@
     {
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const payload = $('Build PDF Payload').first().json;\nconst template = $('Load Email Template').first().json;\n\nfunction fill(str, vars) {\n  let out = String(str || '');\n  for (const [k, v] of Object.entries(vars)) {\n    const re = new RegExp('\\\\{\\\\{' + k + '\\\\}\\\\}', 'g');\n    out = out.replace(re, String(v ?? ''));\n  }\n  return out;\n}\n\nconst vars = {\n  name: payload.name || 'there',\n  week_number: payload.week_number,\n  calendar_url: payload.calendar_url || '',\n  week_pdf_url: '',\n  level2_offer_url: $env.LEVEL2_OFFER_URL || '',\n  goal: payload.goal || payload.profile?.primary_goal || payload.profile?.goal || ''\n};\n\nreturn [{\n  json: {\n    ...payload,\n    email_subject: fill(template.subject, vars),\n    email_html: fill(template.html, vars),\n    attachment_filename: `week${payload.week_number}-plan.pdf`\n  }\n}];"
+        "jsCode": "const payload = $('Build PDF Payload').first().json;\nconst template = $('Load Email Template').first().json;\n\nfunction fill(str, vars) {\n  let out = String(str || '');\n  for (const [k, v] of Object.entries(vars)) {\n    const re = new RegExp('\\\\{\\\\{' + k + '\\\\}\\\\}', 'g');\n    out = out.replace(re, String(v ?? ''));\n  }\n  return out;\n}\n\nconst vars = {\n  Name: payload.name || 'there',\n  name: payload.name || 'there',\n  week_number: payload.week_number,\n  calendar_url: payload.calendar_url || '',\n  week_pdf_url: '',\n  level2_offer_url: $env.LEVEL2_OFFER_URL || '',\n  feedback_url: $env.FEEDBACK_FORM_URL || '',\n  goal: payload.goal || payload.profile?.primary_goal || payload.profile?.goal || ''\n};\n\nreturn [{\n  json: {\n    ...payload,\n    email_subject: fill(template.subject, vars),\n    email_html: fill(template.html, vars),\n    attachment_filename: `week${payload.week_number}-plan.pdf`\n  }\n}];"
       },
       "name": "Render Email Template",
       "type": "n8n-nodes-base.code",
@@ -256,7 +256,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4100,
+        4320,
         180
       ]
     },
@@ -328,6 +328,28 @@
       "typeVersion": 2.6,
       "position": [
         1140,
+        180
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "mdt-pg-cred",
+          "name": "MDT Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO email_sequence_jobs (lead_id, email, template_key, sequence_key, status, scheduled_at, sent_at, metadata)\nVALUES\n  ((SELECT id FROM leads WHERE email = $1), $1, 'week_1',          'level_1_post_payment', 'sent',    NOW(),                        NOW(),  '{\"week_number\":1}'::jsonb),\n  ((SELECT id FROM leads WHERE email = $1), $1, 'week_2',          'level_1_post_payment', 'pending', NOW() + interval '7 days',    NULL,   '{\"week_number\":2}'::jsonb),\n  ((SELECT id FROM leads WHERE email = $1), $1, 'week_3',          'level_1_post_payment', 'pending', NOW() + interval '14 days',   NULL,   '{\"week_number\":3}'::jsonb),\n  ((SELECT id FROM leads WHERE email = $1), $1, 'feedback_day_21', 'level_1_post_payment', 'pending', NOW() + interval '21 days',   NULL,   '{}'::jsonb),\n  ((SELECT id FROM leads WHERE email = $1), $1, 'week_4',          'level_1_post_payment', 'pending', NOW() + interval '21 days',   NULL,   '{\"week_number\":4}'::jsonb),\n  ((SELECT id FROM leads WHERE email = $1), $1, 'upsell_day_30',   'level_1_post_payment', 'pending', NOW() + interval '30 days',   NULL,   '{}'::jsonb)\nON CONFLICT (lead_id, sequence_key, template_key) DO NOTHING;",
+        "options": {
+          "queryReplacement": "={{ [$('Build PDF Payload').first().json.email] }}"
+        }
+      },
+      "name": "Schedule Email Sequence",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        4100,
         180
       ],
       "credentials": {
@@ -471,7 +493,7 @@
       "main": [
         [
           {
-            "node": "Send Success Response",
+            "node": "Schedule Email Sequence",
             "type": "main",
             "index": 0
           }
@@ -523,6 +545,17 @@
         [
           {
             "node": "Normalize User Profile",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Email Sequence": {
+      "main": [
+        [
+          {
+            "node": "Send Success Response",
             "type": "main",
             "index": 0
           }
