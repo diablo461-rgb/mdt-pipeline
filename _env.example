@@ -13,7 +13,7 @@ N8N_SECURE_COOKIE=false
 
 # n8n auth
 N8N_AUTH_USER=admin
-N8N_AUTH_PASSWORD=your_strong_password_here
+N8N_BASIC_AUTH_PASSWORD=your_strong_password_here
 
 # Сгенерируй: openssl rand -hex 16
 N8N_ENCRYPTION_KEY=your_32_char_key_here
@@ -23,14 +23,12 @@ NOCODB_API_TOKEN=nc_pat_Gbh0VRL1x3Vjb4UQRWCrXm7Ji81oKkCxeMTKEoP1
 NOCODB_BASE_ID=p3zeynvi4m1k7ow
 NOCODB_TABLE_ID=mvi4atz2fcfexfv
 
-# ── SMTP (для отправки PDF по email) ────────────────────────────────────────
-# Добавь SMTP credentials в n8n UI: Settings → Credentials → Add → SMTP
-# id должен совпадать с "smtp-credentials" в workflow JSON
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=your_email@gmail.com
-SMTP_PASSWORD=your_app_password_here
-SMTP_FROM=noreply@yourdomain.com
+# ── Resend (для отправки email) ──────────────────────────────────────────────
+RESEND_API_KEY=
+RESEND_FROM=MDT <plan@microdosing-training.com>
+LEVEL2_OFFER_URL=
+FEEDBACK_FORM_URL=
+MDT_BLOG_URL=
 
 # Public URL where pdf-service is reachable from the generated PDF.
 # Local example: http://localhost:3001
@@ -40,11 +38,11 @@ PUBLIC_BASE_URL=http://localhost:3001
 # ── Calendar links for PDF button (week-specific ICS/webcal/google links) ───
 # Если оставить пустым, pdf-service сам покажет страницу выбора календаря
 # и даст пользователю выбрать сервис и время вручную.
-CALENDAR_DEFAULT_URL=
 CALENDAR_WEEK1_URL=
 CALENDAR_WEEK2_URL=
 CALENDAR_WEEK3_URL=
 CALENDAR_WEEK4_URL=
+CALENDAR_DEFAULT_URL=
 
 # ── Paddle (вебхук endpoint регистрируется в Paddle Dashboard) ───────────────
 # Paddle webhook URL: https://your-n8n-domain/webhook/paddle-webhook

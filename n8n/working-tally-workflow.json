@@ -150,6 +150,25 @@
           "name": "MDT Postgres"
         }
       }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH lead_row AS (\n  SELECT id, email\n  FROM leads\n  WHERE lower(trim(email)) = lower(trim($1))\n    AND payment_date IS NULL\n    AND COALESCE(status, '') <> 'paid'\n  LIMIT 1\n), jobs(template_key, scheduled_at) AS (\n  VALUES\n    ('bounce_no_payment_30m', NOW() + interval '30 minutes'),\n    ('bounce_no_payment_24h', NOW() + interval '24 hours'),\n    ('bounce_no_payment_48h', NOW() + interval '48 hours'),\n    ('bounce_no_payment_72h', NOW() + interval '72 hours'),\n    ('bounce_no_payment_96h', NOW() + interval '96 hours'),\n    ('bounce_no_payment_120h', NOW() + interval '120 hours')\n)\nINSERT INTO email_sequence_jobs (\n  lead_id,\n  email,\n  template_key,\n  sequence_key,\n  status,\n  scheduled_at,\n  metadata\n)\nSELECT\n  lr.id,\n  lr.email,\n  j.template_key,\n  'no_payment_bounce',\n  'pending',\n  j.scheduled_at,\n  jsonb_build_object(\n    'source', 'tally_checkout_created',\n    'requires_pdf', false\n  )\nFROM lead_row lr\nCROSS JOIN jobs j\nON CONFLICT (lead_id, sequence_key, template_key) DO NOTHING\nRETURNING id, lead_id, template_key, scheduled_at;",
+        "options": {
+          "queryReplacement": "={{ [$('Save Checkout URL').first().json.email] }}"
+        }
+      },
+      "name": "Enqueue No Payment Bounce Jobs",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [1460, 420],
+      "credentials": {
+        "postgres": {
+          "id": "mdt-pg-cred",
+          "name": "MDT Postgres"
+        }
+      }
     }
   ],
   "connections": {
@@ -220,6 +239,17 @@
       ]
     },
     "Save Checkout URL": {
+      "main": [
+        [
+          {
+            "node": "Enqueue No Payment Bounce Jobs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enqueue No Payment Bounce Jobs": {
       "main": [
         [
           {

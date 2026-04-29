@@ -20,7 +20,7 @@ mdt-pipeline/
 │   ├── working-tally-workflow.json      # Tally → PostgreSQL + Paddle transaction creation
 │   ├── get-checkout-workflow.json       # GET /checkout-redirect → DB lookup + HTTP redirect на checkout URL
 │   ├── paddle-payment-workflow.json     # Paddle webhook → payment verification → week1 send
-│   └── weekly-sender-workflow.json      # MDT Weekly PDF Sender
+│   └── weekly-sender-workflow.json      # MDT Email Sequence Sender
 ├── pdf-service/
 │   ├── Dockerfile
 │   ├── server.js                        # Express API: POST /generate-pdf, GET /health
@@ -95,7 +95,10 @@ open http://localhost:5678
 | `WEBHOOK_URL`           | Публичный URL для вебхуков n8n                           |
 | `TIMEZONE`              | Временная зона (`Europe/Berlin` и т.д.)                  |
 | `RESEND_API_KEY`        | API-ключ Resend (для отправки email)                     |
-| `RESEND_FROM`           | Адрес отправителя (`MDT <noreply@yourdomain.com>`)       |
+| `RESEND_FROM`           | Адрес отправителя (`MDT <plan@microdosing-training.com>`) |
+| `LEVEL2_OFFER_URL`      | Ссылка на оффер Level 2 (для `upsell_day_30`)             |
+| `FEEDBACK_FORM_URL`     | Ссылка на форму фидбэка (для `feedback_day_21`)           |
+| `MDT_BLOG_URL`          | Ссылка на блог MDT (для `bounce_no_payment_72h`)          |
 | `NOCODB_API_TOKEN`      | Токен NocoDB (для загрузки данных упражнений)            |
 | `NOCODB_BASE_ID`        | ID базы в NocoDB                                         |
 | `NOCODB_TABLE_ID`       | ID таблицы упражнений в NocoDB                           |
@@ -145,7 +148,8 @@ Tally (квиз) → POST /webhook/tally-webhook
 - Валидирует Paddle-конфиг перед API вызовом (`Validate Paddle Config`)
 - Создаёт транзакцию Paddle через API (`POST /transactions` к `PADDLE_API_URL`)
 - Сохраняет `checkout_url` и `paddle_transaction_id` в запись лида
-- Узлы: Webhook → Parse Tally → Build DB Record → Save Lead → Validate Paddle Config → Create Paddle Transaction → Save Checkout URL
+- Создаёт no-payment jobs в `email_sequence_jobs` (`sequence_key='no_payment_bounce'`): 30m, 24h, 48h, 72h, 96h, 120h
+- Узлы: Webhook → Parse Tally → Build DB Record → Save Lead → Validate Paddle Config → Create Paddle Transaction → Save Checkout URL → Enqueue No Payment Bounce Jobs
 
 ### 2. Checkout redirect (`get-checkout-workflow.json`)
 
@@ -169,39 +173,53 @@ Tally (квиз) → POST /webhook/tally-webhook
   - обновляет лида (`status = paid`, `payment_date`, `paid_amount`, `paddle_transaction_id`, `paddle_customer_id`)
   - генерирует персональный `program_plan` через `program-service` (`Generate Program`)
   - собирает и отправляет Week 1 PDF по email
-  - ставит `week1_sent_at = NOW()` и `next_send_at = NOW() + 7 days`
+  - ставит `week1_sent_at = NOW()` (и `next_send_at` для обратной совместимости)
+  - планирует future sequence jobs в `email_sequence_jobs` через `INSERT ... ON CONFLICT DO NOTHING`:
+    - `week_2` (+7d), `week_3` (+14d), `feedback_day_21` (+21d), `week_4` (+21d), `upsell_day_30` (+30d)
+  - отменяет pending `no_payment_bounce` jobs (`status='skipped'`, `metadata.skip_reason='paid'`)
 
 **Важно для `Generate Program`:** `user_profile` из `Mark Lead as Paid` может прийти как `jsonb`-object, JSON-string, `null` или пустое значение. Workflow теперь безопасно нормализует его в object и не делает прямой `JSON.parse(undefined)`.
 
-### 4. MDT Weekly PDF Sender (`weekly-sender-workflow.json`)
+### 4. MDT Email Sequence Sender (`weekly-sender-workflow.json`)
 
-**Расписание:** каждый день в 09:00
+**Расписание:** каждые 10 минут (`*/10 * * * *`)
 
 **Цепочка узлов:**
 
 ```
 Daily 9am Trigger
-  → Find Due Leads          (PostgreSQL: WHERE next_send_at <= NOW() AND week4_sent_at IS NULL)
-  → Build PDF Payload       (Code: формирует данные для PDF + определяет номер недели)
-  → Load Email Template     (PostgreSQL: SELECT из email_templates по template_key, fallback на week_1)
-  → Render Email Template   (Code: заменяет {{name}}, {{week_number}}, {{calendar_url}} и т.д.)
-  → Generate PDF            (HTTP POST → pdf-service:3001/generate-pdf)
-  → Send Email              (HTTP POST → api.resend.com/emails, PDF прикреплён как base64)
-  → Update sent_at          (PostgreSQL: UPDATE week{N}_sent_at = NOW(), next_send_at += 7 дней)
+  → Claim Due Jobs          (PostgreSQL: atomically claim `pending` jobs with `scheduled_at <= NOW()`)
+  → Skip Paid No-Payment?   (для `sequence_key='no_payment_bounce'`, если лид уже paid -> `status='skipped'`)
+  → Build Job Payload       (Code: рендер переменных и решение нужен ли PDF)
+  → Requires PDF?           (IF)
+      ├─ yes → Generate PDF → Send Email With PDF
+      └─ no  → Send Email Without PDF
+  → Send OK?                (IF)
+      ├─ yes → Mark Job Sent (status=`sent`, `sent_at=NOW()`, compatibility update in `leads`)
+      └─ no  → Mark Job Failed (attempts-driven `pending`/`failed`, `last_error`)
 ```
 
-**Логика определения недели:**
+**Критерии выборки jobs:**
 
 ```sql
-CASE
-  WHEN week1_sent_at IS NULL THEN 1
-  WHEN week2_sent_at IS NULL THEN 2
-  WHEN week3_sent_at IS NULL THEN 3
-  WHEN week4_sent_at IS NULL THEN 4
-END AS week_to_send
+status = 'pending'
+scheduled_at <= NOW()
+template.is_active = TRUE
+AND (
+  sequence_key = 'no_payment_bounce'
+  OR (sequence_key <> 'no_payment_bounce' AND lead.status = 'paid')
+)
 ```
 
-После отправки недели 4 поле `next_send_at` становится `NULL` (отправки прекращаются).
+`next_send_at` и `week2_sent_at..week4_sent_at` остаются для обратной совместимости и обновляются при отправке week email.
+
+### No-payment bounce sequence
+
+- `sequence_key='no_payment_bounce'` создается сразу после генерации checkout в `working-tally-workflow.json`.
+- Timings: `30m`, `24h`, `48h`, `72h`, `96h`, `120h`.
+- Письма уходят только если пользователь еще не оплатил.
+- При оплате через `paddle-payment-workflow.json` все pending bounce jobs переводятся в `skipped`.
+- Bounce emails не вызывают `pdf-service` и не добавляют attachments.
 
 ---
 
@@ -269,6 +287,7 @@ cat /tmp/paddle_txn_check.json
 | `week3_sent_at`       | TIMESTAMP    | Дата отправки письма недели 3         |
 | `week4_sent_at`       | TIMESTAMP    | Дата отправки письма недели 4         |
 | `next_send_at`        | TIMESTAMP    | Следующая запланированная отправка    |
+| `completed_at`        | TIMESTAMP    | Время завершения Level 1 (после `upsell_day_30`) |
 | `status`              | VARCHAR(50)  | Статус лида (default: `new`)          |
 | `created_at`          | TIMESTAMP    | Время создания записи                 |
 | `updated_at`          | TIMESTAMP    | Время последнего обновления           |
@@ -302,24 +321,63 @@ cat /tmp/paddle_txn_check.json
 
 ### Таблица `email_templates`
 
-Хранит HTML-шаблоны писем для каждой недели и upsell.
+Хранит HTML-шаблоны писем для sequence-рассылки.
 
 | `template_key`  | Описание                        |
 |-----------------|---------------------------------|
 | `week_1`        | Письмо при старте (неделя 1)    |
 | `week_2`        | Напоминание — неделя 2          |
 | `week_3`        | Напоминание — неделя 3          |
-| `week_4`        | Финальная неделя                |
-| `upsell_day_30` | Upsell после завершения курса   |
+| `feedback_day_21` | Check-in на 21-й день         |
+| `week_4`          | Финальная неделя              |
+| `upsell_day_30`   | Upsell после завершения курса |
+| `bounce_no_payment_30m`  | Bounce через 30 минут после checkout |
+| `bounce_no_payment_24h`  | Bounce через 24 часа |
+| `bounce_no_payment_48h`  | Bounce через 48 часов |
+| `bounce_no_payment_72h`  | Bounce через 72 часа |
+| `bounce_no_payment_96h`  | Bounce через 96 часов |
+| `bounce_no_payment_120h` | Финальный bounce через 120 часов |
+
+Дополнительно: `requires_pdf BOOLEAN NOT NULL DEFAULT FALSE`.
+
+- `week_1..week_4` -> `requires_pdf=true`
+- `feedback_day_21`, `upsell_day_30`, `bounce_no_payment_*` -> `requires_pdf=false`
 
 **Переменные в шаблонах:**
 
 | Переменная          | Значение                       |
 |---------------------|--------------------------------|
 | `{{name}}`          | Имя клиента                    |
+| `{{Name}}`          | Имя клиента (вариант с заглавной буквой) |
+| `{{goal}}`          | Цель из `user_profile.primary_goal` / `user_profile.goal` |
 | `{{week_number}}`   | Номер текущей недели           |
 | `{{calendar_url}}`  | Ссылка на добавление в календарь |
+| `{{week_pdf_url}}`  | Зарезервировано для будущего использования |
 | `{{level2_offer_url}}` | Ссылка на Level 2 upsell    |
+| `{{feedback_url}}`  | Ссылка на feedback форму       |
+| `{{checkout_url}}`  | Ссылка на Paddle checkout (из `leads.checkout_url`, есть fallback) |
+| `{{mdt_blog_url}}`  | Ссылка на блог MDT (`MDT_BLOG_URL`) |
+
+### Таблица `email_sequence_jobs`
+
+Универсальная очередь запланированных писем.
+
+Ключевые поля:
+- `lead_id`, `email`, `template_key`, `sequence_key`
+- `status` (`pending`, `processing`, `sent`, `failed`, `skipped`)
+- `scheduled_at`, `sent_at`, `attempts`, `last_error`, `metadata`
+
+Индексы/ограничения:
+- `idx_email_sequence_jobs_status_scheduled_at`
+- `idx_email_sequence_jobs_lead_id`
+- `UNIQUE (lead_id, sequence_key, template_key)` для антидублей
+
+```sql
+SELECT lead_id, template_key, sequence_key, status, scheduled_at, sent_at
+FROM email_sequence_jobs
+WHERE sequence_key = 'no_payment_bounce'
+ORDER BY scheduled_at;
+```
 
 ### Управление шаблонами (SQL)
 
@@ -332,7 +390,8 @@ SELECT upsert_email_template(
   'week_2',
   'MDT Plan - Week 2: Keep It Going',
   '<div><p>Hi {{name}}, welcome to Week 2...</p></div>',
-  TRUE
+  TRUE,  -- is_active
+  TRUE   -- requires_pdf
 );
 
 -- Выключить шаблон
@@ -341,6 +400,12 @@ SELECT set_email_template_active('week_3', FALSE);
 -- Включить обратно
 SELECT set_email_template_active('week_3', TRUE);
 ```
+
+### Как добавить новую кампанию (например, `bounce_upsell`)
+
+1. Добавь/обнови шаблон в `email_templates` с новым `template_key`.
+2. Создай `pending` job в `email_sequence_jobs` с нужным `scheduled_at` и `sequence_key`.
+3. `weekly-sender-workflow.json` автоматически подхватит job без изменения JSON workflow.
 
 ---
 
@@ -625,4 +690,6 @@ docker compose exec postgres psql -U mdt_user -d mdt_db -c \
 - [ ] E2E-тест с Paddle sandbox картой `4242 4242 4242 4242`
 - [ ] Проверить PDF генерируется и приходит на email
 - [ ] Перевести Paddle на production (убрать `Paddle.Environment.set("sandbox")`, сменить ключи)
-- [ ] Добавить post-payment upsell (`upsell_day_30`) и алерты n8n на ошибки
+- [x] Перевести post-payment рассылку на универсальную очередь `email_sequence_jobs`
+- [x] Добавить шаблоны `feedback_day_21` и `upsell_day_30`
+- [ ] Добавить bounce-сценарии (`bounce_upsell_no_payment`, `bounce_upsell`) как отдельные jobs

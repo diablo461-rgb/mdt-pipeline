@@ -8,14 +8,19 @@
 ## Workflow boundaries (must stay aligned)
 - `n8n/working-tally-workflow.json`: `POST /webhook/tally-webhook`, parse Tally fields, normalize profile, `INSERT ... ON CONFLICT (email)`, validate Paddle env/key/price config, create Paddle transaction, store `checkout_url` + `paddle_transaction_id`.
 - `n8n/get-checkout-workflow.json`: `GET /webhook/checkout-redirect?email=...`, SQL retry (`pg_sleep(2)`) for late checkout URL, redirect to stored `checkout_url` or Paddle fallback.
-- `n8n/paddle-payment-workflow.json`: verify `Paddle-Signature` from `rawBody`, reject stale/invalid signatures, idempotency via `payment_events.event_id`, then mark paid, call `program-service` (`Generate Program`) to build `program_plan`, send Week 1.
-- `n8n/weekly-sender-workflow.json`: cron `0 9 * * *`, find due leads by `next_send_at`, generate/send week N, update `week{N}_sent_at`; set `next_send_at = NULL` after week 4.
+- `n8n/paddle-payment-workflow.json`: verify `Paddle-Signature` from `rawBody`, reject stale/invalid signatures, idempotency via `payment_events.event_id`, then mark paid, call `program-service` (`Generate Program`) to build `program_plan`, send Week 1, and enqueue future jobs in `email_sequence_jobs`.
+- `n8n/weekly-sender-workflow.json`: cron `0 9 * * *`, atomically claim due jobs from `email_sequence_jobs` (`pending`, `scheduled_at <= NOW()`), render/send by `template_key`, mark `sent/failed` with retry attempts, and keep compatibility updates in `leads` week sent timestamps.
 
 ## Data model invariants
 - Schema source: `init.sh`; backfill migration: `migrations/001_align_schema_with_workflows.sql` (keep both updated together).
 - Identity key is `leads.email` (unique); many flows depend on case-insensitive email matching.
 - Payment idempotency requires `payment_events(event_id UNIQUE)` + pre-check query before side effects.
-- Email templates are DB-driven (`email_templates`), with SQL fallback to `week_1` template when key is missing/inactive.
+- Email templates are DB-driven (`email_templates`) and sequence orchestration must go through `email_sequence_jobs` (do not add new per-campaign timestamp columns in `leads`).
+- `email_templates.requires_pdf=true` is required for week templates (`week_1..week_4`); feedback/upsell templates keep `requires_pdf=false`.
+- No-payment bounce emails must always check current payment status before sending.
+- Paid webhook must skip all pending `no_payment_bounce` jobs.
+- Do not add `leads` columns for individual bounce emails; use `email_sequence_jobs` only.
+- Bounce templates keep `requires_pdf=false` and must not call `pdf-service`.
 
 ## PDF service contract
 - API: `pdf-service/server.js` exposes `POST /generate-pdf` and `GET /health`.

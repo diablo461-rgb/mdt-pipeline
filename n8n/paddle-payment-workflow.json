@@ -167,7 +167,7 @@
     {
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const payload = $('Build PDF Payload').first().json;\nconst template = $('Load Email Template').first().json;\n\nfunction fill(str, vars) {\n  let out = String(str || '');\n  for (const [k, v] of Object.entries(vars)) {\n    const re = new RegExp('\\\\{\\\\{' + k + '\\\\}\\\\}', 'g');\n    out = out.replace(re, String(v ?? ''));\n  }\n  return out;\n}\n\nconst vars = {\n  name: payload.name || 'there',\n  week_number: payload.week_number,\n  calendar_url: payload.calendar_url || '',\n  week_pdf_url: '',\n  level2_offer_url: $env.LEVEL2_OFFER_URL || '',\n  goal: payload.goal || payload.profile?.primary_goal || payload.profile?.goal || ''\n};\n\nreturn [{\n  json: {\n    ...payload,\n    email_subject: fill(template.subject, vars),\n    email_html: fill(template.html, vars),\n    attachment_filename: `week${payload.week_number}-plan.pdf`\n  }\n}];"
+        "jsCode": "const payload = $('Build PDF Payload').first().json;\nconst template = $('Load Email Template').first().json;\n\nconst fill = (str, vars) => String(str || '').replace(/{{\\s*([a-zA-Z0-9_]+)\\s*}}/g, (_, key) => String(vars[key] ?? ''));\n\nconst safeName = payload.name || 'there';\nconst vars = {\n  name: safeName,\n  Name: safeName,\n  week_number: payload.week_number,\n  calendar_url: payload.calendar_url || '',\n  week_pdf_url: '',\n  level2_offer_url: $env.LEVEL2_OFFER_URL || '',\n  feedback_url: $env.FEEDBACK_FORM_URL || '',\n  checkout_url: '',\n  mdt_blog_url: $env.MDT_BLOG_URL || '',\n  goal: payload.goal || payload.profile?.primary_goal || payload.profile?.goal || ''\n};\n\nreturn [{\n  json: {\n    ...payload,\n    email_subject: fill(template.subject, vars),\n    email_html: fill(template.html, vars),\n    attachment_filename: `week${payload.week_number}-plan.pdf`\n  }\n}];"
       },
       "name": "Render Email Template",
       "type": "n8n-nodes-base.code",
@@ -249,14 +249,33 @@
     },
     {
       "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO email_sequence_jobs (lead_id, email, template_key, sequence_key, status, scheduled_at, metadata)\nSELECT\n  l.id,\n  l.email,\n  seq.template_key,\n  'level_1_post_payment',\n  'pending',\n  NOW() + seq.delay_interval,\n  seq.metadata\nFROM leads l\nJOIN (\n  VALUES\n    ('week_2', interval '7 days', jsonb_build_object('week_number', 2)),\n    ('week_3', interval '14 days', jsonb_build_object('week_number', 3)),\n    ('feedback_day_21', interval '21 days', '{}'::jsonb),\n    ('week_4', interval '21 days', jsonb_build_object('week_number', 4)),\n    ('upsell_day_30', interval '30 days', '{}'::jsonb)\n) AS seq(template_key, delay_interval, metadata) ON TRUE\nWHERE l.email = $1\n  AND l.status = 'paid'\nON CONFLICT (lead_id, sequence_key, template_key) DO NOTHING;",
+        "options": {
+          "queryReplacement": "={{ [$('Build PDF Payload').first().json.email] }}"
+        }
+      },
+      "name": "Enqueue Sequence Jobs",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [4100, 180],
+      "credentials": {
+        "postgres": {
+          "id": "mdt-pg-cred",
+          "name": "MDT Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const data = $('Build PDF Payload').first().json;\nreturn [{ json: { status: 'ok', message: `Payment verified, week ${data.week_number} generated and sent`, email: data.email, week_number: data.week_number } }];"
+        "jsCode": "const data = $('Build PDF Payload').first().json;\nreturn [{ json: { status: 'ok', message: `Payment verified, week ${data.week_number} generated and sent; sequence jobs scheduled`, email: data.email, week_number: data.week_number } }];"
       },
       "name": "Send Success Response",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4100,
+        4320,
         180
       ]
     },
@@ -272,6 +291,25 @@
         1140,
         480
       ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE email_sequence_jobs\nSET\n  status = 'skipped',\n  updated_at = NOW(),\n  metadata = metadata || jsonb_build_object('skip_reason', 'paid')\nWHERE lead_id = $1\n  AND sequence_key = 'no_payment_bounce'\n  AND status = 'pending'\nRETURNING id, template_key, status;",
+        "options": {
+          "queryReplacement": "={{ [Number($('Mark Lead as Paid').first().json.id || 0)] }}"
+        }
+      },
+      "name": "Skip Pending No Payment Bounce Jobs",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [1500, 180],
+      "credentials": {
+        "postgres": {
+          "id": "mdt-pg-cred",
+          "name": "MDT Postgres"
+        }
+      }
     },
     {
       "parameters": {
@@ -383,6 +421,17 @@
       "main": [
         [
           {
+            "node": "Skip Pending No Payment Bounce Jobs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Skip Pending No Payment Bounce Jobs": {
+      "main": [
+        [
+          {
             "node": "Record Payment Event",
             "type": "main",
             "index": 0
@@ -468,6 +517,17 @@
       ]
     },
     "Update week1_sent_at": {
+      "main": [
+        [
+          {
+            "node": "Enqueue Sequence Jobs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enqueue Sequence Jobs": {
       "main": [
         [
           {

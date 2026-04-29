@@ -1,0 +1,410 @@
+{
+  "week_1": {
+    "midday": {
+      "main": {
+        "cues": "No jaw clench, neck long, blades down/back. ",
+        "name": "Chin Tucks + Scapula Squeezes",
+        "ex_id": "E96",
+        "level": "beginner",
+        "image_url": "https://drive.google.com/file/d/17HMfe2p1Et1ysLIoGgIrGWdkhRajH-5X/view?usp=drive_link",
+        "intensity": "low",
+        "body_focus": "upper_body",
+        "description": "Tuck the chin back → squeeze the shoulder blades → stand tall. 1. Stand tall, feet hip-width, spine long. 2. Perform a chin tuck (NOT a chin down), gently pull your head straight back, as if making a double-chin. 3. While maintaining the chin tuck. Pull your shoulder blades inward and slightly downward. Think: “put shoulder blades in your back pockets”. 4. Hold 1 sec & reset. 5. Repeat.",
+        "primary_goal": "destress",
+        "movement_type": "activation,posture"
+      },
+      "warmup": {
+        "cues": "Tall spine, quiet feet, eyes level.",
+        "name": "March in Place With Hold",
+        "ex_id": "W50",
+        "level": "beginner",
+        "image_url": "https://drive.google.com/file/d/1Yy87a3aR-k2mlLZc7F6u7OyfaMvhRnTk/view?usp=drive_link",
+        "intensity": "low",
+        "body_focus": "lower_body",
+        "description": "Lift the knee → hold balance → switch sides. 1. Stand tall, feet hip-width apart. 2. Lift the right knee toward hip height, simultaneously swing the left arm forward. Opposite arm and leg move together. 3. Pause at the top for 2 sec. 4. Lower & Switch sides.",
+        "movement_type": "activation,balance"
+      }
+    },
+    "evening": {
+      "main": {
+        "cues": "Rotate from mid-back, slow breath. Breath makes the rotation deeper but safe. \n",
+        "name": "Thread the Needle at Wall ",
+        "ex_id": "E89",
+        "level": "beginner",
+        "image_url": "https://drive.google.com/file/d/1gwUn_45HWGjUCyT0c0OFPQ23nAaQ4xuf/view?usp=drive_link",
+        "intensity": "low",
+        "body_focus": "upper_body",
+        "description": "Reach the arm under across the body → rotate through the upper back. 1. Stand facing a wall about one forearm’s length away, feet hip-width apart. Place both hands flat at chest height. Light bend in knees. 2. Lift the right hand off, rotate your torso gently to the left. Reach your right arm under the left arm, sliding it across the body. Palm faces the wall as you reach. Allow ribcage to rotate. 4. Alternate.",
+        "primary_goal": "destress",
+        "movement_type": "mobility,breathing"
+      },
+      "warmup": {
+        "cues": "Keep ribs knit and neck long. Blades glide, don’t shrug.",
+        "name": "Wall Angels",
+        "ex_id": "W02",
+        "level": "beginner",
+        "image_url": "https://drive.google.com/file/d/15Xpjgf-bKqXt9k6ROJtaqegGGimX450G/view?usp=drive_link",
+        "intensity": "low",
+        "body_focus": "upper_body",
+        "description": "Back to wall → slide arms up. 1. Stand against a wall. Heels about 20 cm away, arms in a “Goalpost” shape. Elbows bent to 90° at shoulder height. Upper arms + forearms gently touch the wall. 2. Slowly slide arms up the wall, elbows and forearms glide upward. 4. Reverse the movement. Elbows slide down. Shoulder blades rotate down and inward. 5. Repeat.",
+        "movement_type": "mobility"
+      }
+    },
+    "morning": {
+      "main": {
+        "cues": "No neck strain, breathe slowly, not a compressive stretch.",
+        "name": "Supine Hug Knees",
+        "ex_id": "E110",
+        "level": "beginner",
+        "image_url": "https://drive.google.com/file/d/1shPT14ppIr8SdShIVvg4hiuuhwnDix0c/view?usp=drive_link",
+        "intensity": "low",
+        "body_focus": "full_body",
+        "description": "Pull the knees in → gently hug them → relax the lower back. 1. Lie on your back, knees bent toward your chest. 2. Hug both shins, elbows relaxed, grip gentle ( NOT a forceful pull). 3. Exhale through your mouth. Ribs gently drop down and inward. Lower back melts toward the floor. 4. Let the knees drift a bit closer to the chest. Do NOT pull aggressively. 5. Hold 3 sec. 6. Reset & repeat.",
+        "primary_goal": "destress",
+        "movement_type": "mobility,relaxation"
+      },
+      "warmup": {
+        "cues": "Exhale slowly through the mouth. Let ribs drop down and inward.",
+        "name": "Side Wall Chest Stretch",
+        "ex_id": "W24",
+        "level": "intermediate",
+        "image_url": "https://drive.google.com/file/d/1vnTdohpX1sUoiTec0i8BrGJsD7JnKN3N/view?usp=drive_link",
+        "intensity": "low",
+        "body_focus": "upper_body",
+        "description": "Turn away from the wall → open the chest → breathe into the stretch. 1. Stand next to a wall, side-on. Feet hip-width, posture tall. 2. One arm closest to the wall, elbow bent to 90°. Forearm and palm flat on the wall. 3. To begin the stretch, rotate the chest gently away from the wall. Keep the shoulder pulled back and down. 4. Hold the stretch 3 sec. 5. Reset & repeat. 6. Switch sides.",
+        "movement_type": "mobility,breathing"
+      }
+    },
+    "afternoon": {
+      "main": {
+        "cues": "Nasal inhale low, melt ribs on exhale, relax jaw. \n",
+        "name": "Supine Breathing",
+        "ex_id": "E86",
+        "level": "beginner",
+        "image_url": "https://drive.google.com/file/d/1qCwj4PKhT-edKLQKZkMTur6YBQOfnrD9/view?usp=drive_link",
+        "intensity": "low",
+        "body_focus": "full_body",
+        "description": "Breathe into the belly → ribs expand → slow exhale. 1. Lie on your back in a relaxed position. Knees bent, feet flat. 2. Before you start, let your rib cage melt down toward the floor, allow the belly to soften (don’t brace or hold). 3. Inhale through the nose, expand. 4. Exhale through the mouth slow, long, quiet. 5. Repeat.",
+        "primary_goal": "destress",
+        "movement_type": "breathing,relaxation"
+      },
+      "warmup": {
+        "cues": "Move slow. Stay tall. Control the circle.",
+        "name": "Waist Circles",
+        "ex_id": "W70",
+        "level": "intermediate",
+        "image_url": "https://drive.google.com/file/d/1sT6WWtSYsAnezIRfSPxVldQP0g11WiqH/view?usp=drive_link",
+        "intensity": "low",
+        "body_focus": "upper_body",
+        "description": "Stand tall → circle the hips → move smoothly around. 1. Stand tall, feet hip-width apart. Hands on hips, light core brace, relax shoulders. 2. Slowly shift your body weight (torso), forward, to the right, backward, to the left. Connect these shifts into a smooth circle. 3. Reverse direction.",
+        "movement_type": "balance,coordination"
+      }
+    }
+  },
+  "week_2": {
+    "midday": {
+      "main": {
+        "cues": "Push the hips back. Reach long through the arms.\n",
+        "name": "Wall Supported Child’s Pose",
+        "ex_id": "E94",
+        "level": "beginner",
+        "image_url": "https://drive.google.com/file/d/1UV4ILqtJhy9U_cImPOy4G8CkkifNy34a/view?usp=drive_link",
+        "intensity": "low",
+        "body_focus": "upper_body",
+        "description": "Hands on wall → sit hips back → lengthen the spine. 1. Kneel facing a wall. Place both hands at shoulder height, arms straight. 2. Slowly push the hips back while keeping the arms long on the wall. 3. Let the chest drop slightly and allow the wall to support your arms and shoulders as the spine lengthens. 4. Hold 3 sec. 5. Reset and repeat.",
+        "primary_goal": "destress",
+        "movement_type": "mobility,breathing"
+      },
+      "warmup": {
+        "cues": "Move slow. Stay tall. Control the circle.",
+        "name": "Waist Circles",
+        "ex_id": "W70",
+        "level": "intermediate",
+        "image_url": "https://drive.google.com/file/d/1sT6WWtSYsAnezIRfSPxVldQP0g11WiqH/view?usp=drive_link",
+        "intensity": "low",
+        "body_focus": "upper_body",
+        "description": "Stand tall → circle the hips → move smoothly around. 1. Stand tall, feet hip-width apart. Hands on hips, light core brace, relax shoulders. 2. Slowly shift your body weight (torso), forward, to the right, backward, to the left. Connect these shifts into a smooth circle. 3. Reverse direction.",
+        "movement_type": "balance,coordination"
+      }
+    },
+    "evening": {
+      "main": {
+        "cues": "Hips back. Arms long. Spine heavy. Let gravity work.",
+        "name": "The Wall Hinge",
+        "ex_id": "E102",
+        "level": "beginner",
+        "image_url": "https://drive.google.com/file/d/1bkdDZ08b4I8etLvT3HtoRAZkE88IlUZ4/view?usp=drive_link",
+        "intensity": "low",
+        "body_focus": "upper_body",
+        "description": "Hands on wall → hinge back → lengthen the whole back. 1. Place both palms on the wall at about shoulder height. 2. Step your feet back a little. Sit your hips straight backward, mini hip hinge. Arms extend as the trunk leans forward. The head hangs between the arms. Allow the spine to lengthen. 3. Hold 3 sec. 4. Reset & repeat. ",
+        "primary_goal": "destress",
+        "movement_type": "mobility,relaxation"
+      },
+      "warmup": {
+        "cues": "Tall posture. Soft step. Reach long.",
+        "name": "Step Back + Arm Reach & Clap",
+        "ex_id": "W73",
+        "level": "advanced",
+        "image_url": "https://drive.google.com/file/d/1XwA1BEX_aSNJfKWcZJji9gQuc4hsY24H/view?usp=drive_link",
+        "intensity": "low",
+        "body_focus": "full_body",
+        "description": "Step back → reach forward → clap → return tall. 1. Stand tall, hands on hips, feet hip-width apart. 2. Step the right foot back and slight bend the right knee. Torso remains upright. 3. Lift both arms forward, reach to shoulder height, clap hands in front of the chest. 4. Bring arms back down, step forward to center. 5. Switch legs.",
+        "movement_type": "mobility,activation"
+      }
+    },
+    "morning": {
+      "main": {
+        "cues": "Long exhale, no numbness, ribs down. Keep the stretch mild and easy.\n",
+        "name": "Doorway Stretch",
+        "ex_id": "E90",
+        "level": "beginner",
+        "image_url": "https://drive.google.com/file/d/1V8HbxteVfFDp_0uhSg1R5C3aA1JixwcN/view?usp=drive_link",
+        "intensity": "low",
+        "body_focus": "upper_body",
+        "description": "Open the chest → lean through the doorway → breathe. 1. Stand in a doorway, one foot slightly forward. 2. Place your hands on the frame. Elbows slightly bent, hands at a chest height. 3. Gently lean or step your body through the doorway. Chest opens forward. Shoulders pull back and down. Neck long and relaxed. 4. Hold 3 sec. 5. Release and repeat.",
+        "primary_goal": "destress",
+        "movement_type": "mobility,stretch"
+      },
+      "warmup": {
+        "cues": "Move like you’re drawing big circles. Shoulders stay relaxed.",
+        "name": "Shoulder Circles ",
+        "ex_id": "W04",
+        "level": "beginner",
+        "image_url": "https://drive.google.com/file/d/18wfdq7vk3hult33y3cpg7OWBQiG7jm-J/view?usp=drive_link",
+        "intensity": "low",
+        "body_focus": "upper_body",
+        "description": "Roll the shoulders through full range. 1. Stand tall, feet hip-width apart. Arms hanging loosely by the sides. 2. Lift the shoulders up toward the ears, roll them back, then down and forward, completing a full circle. 3. Reverse the direction. 4. Move in a smooth circular pattern.",
+        "movement_type": "mobility"
+      }
+    },
+    "afternoon": {
+      "main": {
+        "cues": "Spine long, no pinching, smooth breath. Avoid arching or rounding.",
+        "name": "Quadruped Rock Back + Reach",
+        "ex_id": "E106",
+        "level": "beginner",
+        "image_url": "https://drive.google.com/file/d/1Xb6rQCY_UkZEpBKgRQSW9TjW8s6-zSKl/view?usp=drive_link",
+        "intensity": "low",
+        "body_focus": "upper_body",
+        "description": "Quadruped → rock hips back → reach the arms long. 1. Hands under shoulders, knees under hips, spine long. 2. Slowly sit your hips backward. Maintain a long spine, hands in place. 3. Extend the left arm straight forward, sliding it along the floor. Reach long through the fingertips. 4. Return to center, reset spine and arms. 5. Alternate.",
+        "primary_goal": "destress",
+        "movement_type": "mobility,breathing"
+      },
+      "warmup": {
+        "cues": "Stay tall. Ribs down. Arms reach up, not back",
+        "name": "High March in Place with Arms Overhead",
+        "ex_id": "W11",
+        "level": "advanced",
+        "image_url": "https://drive.google.com/file/d/18yNbpUUh4Nz8tNs388ARObR6g8P1DvhE/view?usp=drive_link",
+        "intensity": "low",
+        "body_focus": "full_body",
+        "description": "Arms overhead → drive the knee high → stay tall and controlled. 1. Stand tall with feet hip-width apart, core lightly engaged. Both arms extended overhead. 2. Lift your right knee up to hip height (marching action). Keep arms overhead and steady. 3. Lower & Alternate.",
+        "movement_type": "activation,coordination"
+      }
+    }
+  },
+  "week_3": {
+    "midday": {
+      "main": {
+        "cues": "Push the hips back. Reach long through the arms.\n",
+        "name": "Wall Supported Child’s Pose",
+        "ex_id": "E94",
+        "level": "beginner",
+        "image_url": "https://drive.google.com/file/d/1UV4ILqtJhy9U_cImPOy4G8CkkifNy34a/view?usp=drive_link",
+        "intensity": "low",
+        "body_focus": "upper_body",
+        "description": "Hands on wall → sit hips back → lengthen the spine. 1. Kneel facing a wall. Place both hands at shoulder height, arms straight. 2. Slowly push the hips back while keeping the arms long on the wall. 3. Let the chest drop slightly and allow the wall to support your arms and shoulders as the spine lengthens. 4. Hold 3 sec. 5. Reset and repeat.",
+        "primary_goal": "destress",
+        "movement_type": "mobility,breathing"
+      },
+      "warmup": {
+        "cues": "Heel stays down. Knee tracks over middle toes. Small pulses.",
+        "name": "Split Stance Ankle Pulses",
+        "ex_id": "W74",
+        "level": "advanced",
+        "image_url": "https://drive.google.com/file/d/1cUm7t6b5DPJUa6VDWJOCz5uMptlumI1g/view?usp=drive_link",
+        "intensity": "low",
+        "body_focus": "lower_body",
+        "description": "Front knee forward → heel stays down → small ankle pulses. 1. Standing in split stance, one foot forward, one foot back. Toes pointing straight forward. 2. Slowly drive the front knee forward. Knee tracks over the 2nd–3rd toe. Stop just before heel lifts. 3. Move back slightly. 4. Reset & repeat. 5. Switch legs.",
+        "movement_type": "activation,posture"
+      }
+    },
+    "evening": {
+      "main": {
+        "cues": "Rotate from mid-back, slow breath. Breath makes the rotation deeper but safe. \n",
+        "name": "Thread the Needle at Wall ",
+        "ex_id": "E89",
+        "level": "beginner",
+        "image_url": "https://drive.google.com/file/d/1gwUn_45HWGjUCyT0c0OFPQ23nAaQ4xuf/view?usp=drive_link",
+        "intensity": "low",
+        "body_focus": "upper_body",
+        "description": "Reach the arm under across the body → rotate through the upper back. 1. Stand facing a wall about one forearm’s length away, feet hip-width apart. Place both hands flat at chest height. Light bend in knees. 2. Lift the right hand off, rotate your torso gently to the left. Reach your right arm under the left arm, sliding it across the body. Palm faces the wall as you reach. Allow ribcage to rotate. 4. Alternate.",
+        "primary_goal": "destress",
+        "movement_type": "mobility,breathing"
+      },
+      "warmup": {
+        "cues": "Rotation comes from the thoracic (chest) spine, not the lower back.",
+        "name": "Standing T-Spine Rotation",
+        "ex_id": "W72",
+        "level": "advanced",
+        "image_url": "https://drive.google.com/file/d/1g2MVUaFiQKgCd99SYFxBRAIo-fZI7Jtl/view?usp=drive_link",
+        "intensity": "low",
+        "body_focus": "upper_body",
+        "description": "Rotate through ribs → keep hips quiet. 1. Stand tall, feet shoulder-width apart. Arms extended out to the sides at shoulder height, forming a T. 2. Rotate your torso to the right, arms stay wide and level, chest turns with the arms. 3. Slowly rotate back to center. 4. Rotate to the left. 5. Continue alternating.",
+        "movement_type": "activation,balance"
+      }
+    },
+    "morning": {
+      "main": {
+        "cues": "Nasal inhale low, melt ribs on exhale, relax jaw. \n",
+        "name": "Supine Breathing",
+        "ex_id": "E86",
+        "level": "beginner",
+        "image_url": "https://drive.google.com/file/d/1qCwj4PKhT-edKLQKZkMTur6YBQOfnrD9/view?usp=drive_link",
+        "intensity": "low",
+        "body_focus": "full_body",
+        "description": "Breathe into the belly → ribs expand → slow exhale. 1. Lie on your back in a relaxed position. Knees bent, feet flat. 2. Before you start, let your rib cage melt down toward the floor, allow the belly to soften (don’t brace or hold). 3. Inhale through the nose, expand. 4. Exhale through the mouth slow, long, quiet. 5. Repeat.",
+        "primary_goal": "destress",
+        "movement_type": "breathing,relaxation"
+      },
+      "warmup": {
+        "cues": "Keep ribs knit and neck long. Blades glide, don’t shrug.",
+        "name": "Wall Angels",
+        "ex_id": "W47",
+        "level": "beginner",
+        "image_url": "https://drive.google.com/file/d/1RstPa6WvDWLVNtNp9ngu3w4e8S0v9OZj/view?usp=drive_link",
+        "intensity": "low",
+        "body_focus": "upper_body",
+        "description": "Back to wall → slide arms up. 1. Stand against a wall. Heels about 20 cm away, arms in a “Goalpost” shape. Elbows bent to 90° at shoulder height. Upper arms + forearms gently touch the wall. 2. Slowly slide arms up the wall, elbows and forearms glide upward. 4. Reverse the movement. Elbows slide down. Shoulder blades rotate down and inward. 5. Repeat.",
+        "movement_type": "activation,mobility"
+      }
+    },
+    "afternoon": {
+      "main": {
+        "cues": "No neck strain, breathe slowly, not a compressive stretch.",
+        "name": "Supine Hug Knees",
+        "ex_id": "E110",
+        "level": "beginner",
+        "image_url": "https://drive.google.com/file/d/1shPT14ppIr8SdShIVvg4hiuuhwnDix0c/view?usp=drive_link",
+        "intensity": "low",
+        "body_focus": "full_body",
+        "description": "Pull the knees in → gently hug them → relax the lower back. 1. Lie on your back, knees bent toward your chest. 2. Hug both shins, elbows relaxed, grip gentle ( NOT a forceful pull). 3. Exhale through your mouth. Ribs gently drop down and inward. Lower back melts toward the floor. 4. Let the knees drift a bit closer to the chest. Do NOT pull aggressively. 5. Hold 3 sec. 6. Reset & repeat.",
+        "primary_goal": "destress",
+        "movement_type": "mobility,relaxation"
+      },
+      "warmup": {
+        "cues": "Long spine, rotate the pelvis, not the knee.",
+        "name": "Supported Hip Airplane",
+        "ex_id": "W57",
+        "level": "advanced",
+        "image_url": "https://drive.google.com/file/d/1Ok2yYCJJLqSdaixuxbW9IK7nkgcyg7sY/view?usp=drive_link",
+        "intensity": "low",
+        "body_focus": "lower_body",
+        "description": "Balance on one leg → hinge forward → open and close the hips like an airplane wing. 1. Stand next to a wall, lightly hold the support with one hand, shift weight onto the right leg. 2. Push hips back into a hip hinge. Torso inclines forward. Back leg extends slightly behind. 3. Slowly rotate the pelvis open to the left. Chest follows slightly. Rotate only as far as you can without losing balance or spine position. 4. Reset and repeat. 5. Switch sides.",
+        "movement_type": "balance,mobility"
+      }
+    }
+  },
+  "week_4": {
+    "midday": {
+      "main": {
+        "cues": "No neck strain, breathe slowly, not a compressive stretch.",
+        "name": "Supine Hug Knees",
+        "ex_id": "E110",
+        "level": "beginner",
+        "image_url": "https://drive.google.com/file/d/1shPT14ppIr8SdShIVvg4hiuuhwnDix0c/view?usp=drive_link",
+        "intensity": "low",
+        "body_focus": "full_body",
+        "description": "Pull the knees in → gently hug them → relax the lower back. 1. Lie on your back, knees bent toward your chest. 2. Hug both shins, elbows relaxed, grip gentle ( NOT a forceful pull). 3. Exhale through your mouth. Ribs gently drop down and inward. Lower back melts toward the floor. 4. Let the knees drift a bit closer to the chest. Do NOT pull aggressively. 5. Hold 3 sec. 6. Reset & repeat.",
+        "primary_goal": "destress",
+        "movement_type": "mobility,relaxation"
+      },
+      "warmup": {
+        "cues": "Hips under ribs, long neck, soft shoulders.",
+        "name": "Tall-Kneeling Rib Stack Reset",
+        "ex_id": "W64",
+        "level": "beginner",
+        "image_url": "https://drive.google.com/file/d/11J7qnjTEWBckCHQKUP-RdflrS_IP9Aab/view?usp=drive_link",
+        "intensity": "low",
+        "body_focus": "lower_body",
+        "description": "Kneel tall → stack ribs over pelvis → breathe and reset posture. 1. Kneel on both knees, knees hip-width apart, toes tucked or relaxed. 2. Gently squeeze glutes, feel pelvis move into a neutral or slight posterior tilt. 3. Slowly exhale through the mouth, feel ribs move down and in. 4. Inhale through the nose, expand ribs front, sides, and back. 5. Repeat.",
+        "movement_type": "activation,posture"
+      }
+    },
+    "evening": {
+      "main": {
+        "cues": "Rotate from mid-back, slow breath. Breath makes the rotation deeper but safe. \n",
+        "name": "Thread the Needle at Wall ",
+        "ex_id": "E89",
+        "level": "beginner",
+        "image_url": "https://drive.google.com/file/d/1gwUn_45HWGjUCyT0c0OFPQ23nAaQ4xuf/view?usp=drive_link",
+        "intensity": "low",
+        "body_focus": "upper_body",
+        "description": "Reach the arm under across the body → rotate through the upper back. 1. Stand facing a wall about one forearm’s length away, feet hip-width apart. Place both hands flat at chest height. Light bend in knees. 2. Lift the right hand off, rotate your torso gently to the left. Reach your right arm under the left arm, sliding it across the body. Palm faces the wall as you reach. Allow ribcage to rotate. 4. Alternate.",
+        "primary_goal": "destress",
+        "movement_type": "mobility,breathing"
+      },
+      "warmup": {
+        "cues": "Lengthen back of neck, move slow, no pinching.",
+        "name": "Neck Articular Rotations",
+        "ex_id": "W17",
+        "level": "beginner",
+        "image_url": "https://drive.google.com/file/d/1BA_lLgh-m3hM2tzK7aN2EWn3b6CP52Fs/view?usp=drive_link",
+        "intensity": "low",
+        "body_focus": "upper_body",
+        "description": "Draw a slow circle with your nose → move smoothly. 1. Head centered, eyes forward. 2. Flexion (chin down). 3. Side bend. 4. Extension (look up). 5. Complete the full circle smoothly.",
+        "movement_type": "mobility,relaxation"
+      }
+    },
+    "morning": {
+      "main": {
+        "cues": "Nasal inhale low, melt ribs on exhale, relax jaw. \n",
+        "name": "Supine Breathing",
+        "ex_id": "E86",
+        "level": "beginner",
+        "image_url": "https://drive.google.com/file/d/1qCwj4PKhT-edKLQKZkMTur6YBQOfnrD9/view?usp=drive_link",
+        "intensity": "low",
+        "body_focus": "full_body",
+        "description": "Breathe into the belly → ribs expand → slow exhale. 1. Lie on your back in a relaxed position. Knees bent, feet flat. 2. Before you start, let your rib cage melt down toward the floor, allow the belly to soften (don’t brace or hold). 3. Inhale through the nose, expand. 4. Exhale through the mouth slow, long, quiet. 5. Repeat.",
+        "primary_goal": "destress",
+        "movement_type": "breathing,relaxation"
+      },
+      "warmup": {
+        "cues": "Exhale as you reach, rotate from upper back.",
+        "name": "Thoracic Reach-Throughs",
+        "ex_id": "W65",
+        "level": "beginner",
+        "image_url": "https://drive.google.com/file/d/1eodHlxlZezU-CaDw1qnrTXF5p1cELMgQ/view?usp=drive_link",
+        "intensity": "low",
+        "body_focus": "upper_body",
+        "description": "From quadruped → reach up → rotate under → reset strong. 1. Start in Quadruped. Hands under shoulders. Knees under hips. 2. Lift the right arm upward toward the ceiling, rotating the chest open. 3. With the right hand, reach across the body and underneath the chest toward the left side. Palm facing up. Hips remain level and still. 4. Reverse the movement and reset. 5. Switch sides. ",
+        "movement_type": "balance,activation"
+      }
+    },
+    "afternoon": {
+      "main": {
+        "cues": "Hips back. Arms long. Spine heavy. Let gravity work.",
+        "name": "The Wall Hinge",
+        "ex_id": "E102",
+        "level": "beginner",
+        "image_url": "https://drive.google.com/file/d/1bkdDZ08b4I8etLvT3HtoRAZkE88IlUZ4/view?usp=drive_link",
+        "intensity": "low",
+        "body_focus": "upper_body",
+        "description": "Hands on wall → hinge back → lengthen the whole back. 1. Place both palms on the wall at about shoulder height. 2. Step your feet back a little. Sit your hips straight backward, mini hip hinge. Arms extend as the trunk leans forward. The head hangs between the arms. Allow the spine to lengthen. 3. Hold 3 sec. 4. Reset & repeat. ",
+        "primary_goal": "destress",
+        "movement_type": "mobility,relaxation"
+      },
+      "warmup": {
+        "cues": "Light pressure, glide smoothly, avoid shrugging.",
+        "name": "Wall Angels",
+        "ex_id": "W19",
+        "level": "beginner",
+        "image_url": "https://drive.google.com/file/d/16r68HZCORQno7fxnb8zmf2wj4_MgEN0R/view?usp=drive_link",
+        "intensity": "low",
+        "body_focus": "upper_body",
+        "description": "Back to wall → slide arms up. 1. Stand against a wall. Heels about 20 cm away, arms in a “Goalpost” shape. Elbows bent to 90° at shoulder height. Upper arms + forearms gently touch the wall. 2. Slowly slide arms up the wall, elbows and forearms glide upward. 4. Reverse the movement. Elbows slide down. Shoulder blades rotate down and inward. 5. Repeat.",
+        "movement_type": "mobility,activation"
+      }
+    }
+  }
+}

@@ -1,6 +1,6 @@
 {
   "id": "770e8400-e29b-41d4-a716-446655440003",
-  "name": "MDT Weekly PDF Sender",
+  "name": "MDT Email Sequence Sender",
   "active": true,
   "nodes": [
     {
@@ -9,12 +9,12 @@
           "interval": [
             {
               "field": "cronExpression",
-              "expression": "0 9 * * *"
+              "expression": "*/10 * * * *"
             }
           ]
         }
       },
-      "name": "Daily 9am Trigger",
+      "name": "Every 10m Trigger",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
       "position": [200, 300]
@@ -22,10 +22,10 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT\n  id,\n  name,\n  email,\n  user_profile,\n  program_plan,\n  CASE\n    WHEN week1_sent_at IS NULL THEN 1\n    WHEN week2_sent_at IS NULL THEN 2\n    WHEN week3_sent_at IS NULL THEN 3\n    WHEN week4_sent_at IS NULL THEN 4\n  END AS week_to_send\nFROM leads\nWHERE payment_date IS NOT NULL\n  AND next_send_at IS NOT NULL\n  AND next_send_at <= NOW()\n  AND week4_sent_at IS NULL;",
+        "query": "WITH due AS (\n  SELECT j.id\n  FROM email_sequence_jobs j\n  JOIN leads l ON l.id = j.lead_id\n  JOIN email_templates t ON t.template_key = j.template_key\n  WHERE j.status = 'pending'\n    AND j.scheduled_at <= NOW()\n    AND t.is_active = TRUE\n    AND (\n      j.sequence_key = 'no_payment_bounce'\n      OR (j.sequence_key <> 'no_payment_bounce' AND l.status = 'paid')\n    )\n  ORDER BY j.scheduled_at ASC, j.id ASC\n  FOR UPDATE SKIP LOCKED\n  LIMIT 100\n)\nUPDATE email_sequence_jobs j\nSET\n  status = 'processing',\n  attempts = j.attempts + 1,\n  updated_at = NOW()\nFROM due, leads l, email_templates t\nWHERE j.id = due.id\n  AND l.id = j.lead_id\n  AND t.template_key = j.template_key\nRETURNING\n  j.id AS job_id,\n  j.lead_id,\n  j.email,\n  j.template_key,\n  j.sequence_key,\n  j.attempts,\n  j.metadata,\n  l.name,\n  l.status AS lead_status,\n  l.payment_date,\n  l.checkout_url,\n  l.paddle_transaction_id,\n  l.user_profile,\n  l.program_plan,\n  t.subject AS template_subject,\n  t.html AS template_html,\n  t.requires_pdf;",
         "options": {}
       },
-      "name": "Find Due Leads",
+      "name": "Claim Due Jobs",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [420, 300],
@@ -39,25 +39,196 @@
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const lead = $input.item.json;\nconst weekNum = Number(lead.week_to_send);\nconst programPlan = typeof lead.program_plan === 'string' ? JSON.parse(lead.program_plan) : (lead.program_plan || {});\nconst profile = typeof lead.user_profile === 'string' ? JSON.parse(lead.user_profile) : (lead.user_profile || {});\nconst weekPlan = programPlan[`week_${weekNum}`] || {};\n\nconst sessions = ['morning', 'midday', 'afternoon', 'evening'];\nconst pickImageUrl = (exercise = {}) => exercise.image_url || exercise.imageUrl || exercise.image || exercise.photo_url || exercise.photoUrl || '';\nconst mapExercise = (exercise) => exercise ? {\n  name: exercise.name,\n  description: exercise.description,\n  image_url: pickImageUrl(exercise),\n  cues: exercise.cues\n} : null;\n\nconst weekPlanForPdf = {};\nfor (const s of sessions) {\n  const slot = weekPlan[s] || {};\n  weekPlanForPdf[s] = {\n    warmup: mapExercise(slot.warmup),\n    main: mapExercise(slot.main)\n  };\n}\n\nconst calendarMap = {\n  1: $env.CALENDAR_WEEK1_URL || '',\n  2: $env.CALENDAR_WEEK2_URL || '',\n  3: $env.CALENDAR_WEEK3_URL || '',\n  4: $env.CALENDAR_WEEK4_URL || ''\n};\nconst calendarUrl = calendarMap[weekNum] || $env.CALENDAR_DEFAULT_URL || '';\n\nreturn { json: {\n  lead_id: lead.id,\n  name: lead.name,\n  email: lead.email,\n  week_number: weekNum,\n  template_key: `week_${weekNum}`,\n  week_plan: weekPlanForPdf,\n  profile: profile,\n  calendar_url: calendarUrl\n} };"
+        "jsCode": "const job = $input.item.json || {};\nconst parseMaybeJson = (value) => {\n  if (!value) return {};\n  if (typeof value === 'object') return value;\n  if (typeof value === 'string') {\n    try {\n      const parsed = JSON.parse(value);\n      return parsed && typeof parsed === 'object' ? parsed : {};\n    } catch {\n      return {};\n    }\n  }\n  return {};\n};\n\nconst metadata = parseMaybeJson(job.metadata);\nconst profile = parseMaybeJson(job.user_profile);\nconst programPlan = parseMaybeJson(job.program_plan);\nconst weekMatch = String(job.template_key || '').match(/^week_(\\d+)$/);\nconst weekNumber = Number(metadata.week_number || (weekMatch ? weekMatch[1] : 0)) || null;\n\nconst sessions = ['morning', 'midday', 'afternoon', 'evening'];\nconst pickImageUrl = (exercise = {}) => exercise.image_url || exercise.imageUrl || exercise.image || exercise.photo_url || exercise.photoUrl || '';\nconst mapExercise = (exercise) => exercise ? ({\n  name: exercise.name,\n  description: exercise.description,\n  image_url: pickImageUrl(exercise),\n  cues: exercise.cues\n}) : null;\n\nconst weekPlanRaw = weekNumber ? (programPlan[`week_${weekNumber}`] || {}) : {};\nconst weekPlan = {};\nfor (const s of sessions) {\n  const slot = weekPlanRaw[s] || {};\n  weekPlan[s] = {\n    warmup: mapExercise(slot.warmup),\n    main: mapExercise(slot.main)\n  };\n}\n\nconst calendarMap = {\n  1: $env.CALENDAR_WEEK1_URL || '',\n  2: $env.CALENDAR_WEEK2_URL || '',\n  3: $env.CALENDAR_WEEK3_URL || '',\n  4: $env.CALENDAR_WEEK4_URL || ''\n};\nconst calendarUrl = weekNumber ? (calendarMap[weekNumber] || $env.CALENDAR_DEFAULT_URL || '') : ($env.CALENDAR_DEFAULT_URL || '');\n\nconst txnId = String(job.paddle_transaction_id || '');\nconst checkoutFromLead = String(job.checkout_url || '').trim();\nconst paddleBase = String($env.PADDLE_API_URL || '').includes('sandbox') ? 'https://sandbox-buy.paddle.com' : 'https://buy.paddle.com';\nconst checkoutUrl = checkoutFromLead || (txnId ? `${paddleBase}/checkout/${txnId}` : '');\n\nconst fill = (str, vars) => String(str || '').replace(/{{\\s*([a-zA-Z0-9_]+)\\s*}}/g, (_, key) => String(vars[key] ?? ''));\nconst safeName = String(job.name || 'there');\nconst goal = profile.primary_goal || profile.goal || '';\nconst vars = {\n  name: safeName,\n  Name: safeName,\n  goal,\n  week_number: weekNumber || '',\n  calendar_url: calendarUrl,\n  week_pdf_url: '',\n  level2_offer_url: $env.LEVEL2_OFFER_URL || '',\n  feedback_url: $env.FEEDBACK_FORM_URL || '',\n  checkout_url: checkoutUrl,\n  mdt_blog_url: $env.MDT_BLOG_URL || ''\n};\n\nconst requiresPdf = String(job.sequence_key || '') === 'no_payment_bounce'\n  ? false\n  : Boolean(job.requires_pdf || String(job.template_key || '').startsWith('week_') || metadata.requires_pdf === true);\n\nconst isPaid = String(job.lead_status || '').toLowerCase() === 'paid' || Boolean(job.payment_date);\n\nreturn {\n  json: {\n    job_id: Number(job.job_id),\n    lead_id: Number(job.lead_id),\n    sequence_key: String(job.sequence_key || ''),\n    template_key: String(job.template_key || ''),\n    email: String(job.email || ''),\n    name: safeName,\n    week_number: weekNumber,\n    requires_pdf: requiresPdf,\n    is_paid: isPaid,\n    profile,\n    week_plan: weekPlan,\n    calendar_url: calendarUrl,\n    checkout_url: checkoutUrl,\n    email_subject: fill(job.template_subject, vars),\n    email_html: fill(job.template_html, vars),\n    attachment_filename: weekNumber ? `week${weekNumber}-plan.pdf` : 'mdt-plan.pdf'\n  }\n};"
       },
-      "name": "Build PDF Payload",
+      "name": "Build Job Payload",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [640, 300]
     },
     {
       "parameters": {
-        "operation": "executeQuery",
-        "query": "WITH picked AS (\n  SELECT subject, html\n  FROM email_templates\n  WHERE template_key = $1 AND is_active = TRUE\n  LIMIT 1\n),\nfallback AS (\n  SELECT subject, html\n  FROM email_templates\n  WHERE template_key = 'week_1' AND is_active = TRUE\n  LIMIT 1\n)\nSELECT\n  COALESCE((SELECT subject FROM picked), (SELECT subject FROM fallback), 'Your MDT Week Plan') AS subject,\n  COALESCE((SELECT html FROM picked), (SELECT html FROM fallback), '<p>Hi {{name}}, your plan is attached.</p>') AS html;",
-        "options": {
-          "queryReplacement": "={{ [$('Build PDF Payload').item.json.template_key] }}"
+        "mode": "runOnceForEachItem",
+        "jsCode": "const item = $input.item.json || {};\nconst shouldSkip = item.sequence_key === 'no_payment_bounce' && item.is_paid === true;\nreturn { json: { ...item, should_skip: shouldSkip } };"
+      },
+      "name": "Evaluate Skip Rule",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [760, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.should_skip }}",
+              "value2": true,
+              "operation": "equal"
+            }
+          ]
         }
       },
-      "name": "Load Email Template",
+      "name": "Skip Paid No-Payment?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [860, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.requires_pdf }}",
+              "value2": true,
+              "operation": "equal"
+            }
+          ]
+        }
+      },
+      "name": "Requires PDF?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [980, 420]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://pdf-service:3001/generate-pdf",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ ({ name: $('Build Job Payload').item.json.name, week_number: $('Build Job Payload').item.json.week_number, week_plan: $('Build Job Payload').item.json.week_plan, profile: $('Build Job Payload').item.json.profile, calendar_url: $('Build Job Payload').item.json.calendar_url }) }}",
+        "options": {}
+      },
+      "name": "Generate PDF",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1080, 180],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ String($json.pdf || '') }}",
+              "operation": "isNotEmpty"
+            }
+          ]
+        }
+      },
+      "name": "PDF Ready?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1300, 180]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.RESEND_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ ({ from: $env.RESEND_FROM, to: $('Build Job Payload').item.json.email, subject: $('Build Job Payload').item.json.email_subject, html: $('Build Job Payload').item.json.email_html, attachments: [{ filename: $('Build Job Payload').item.json.attachment_filename, content: $json.pdf }] }) }}",
+        "options": {}
+      },
+      "name": "Send Email With PDF",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1520, 100],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.RESEND_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ ({ from: $env.RESEND_FROM, to: $('Build Job Payload').item.json.email, subject: $('Build Job Payload').item.json.email_subject, html: $('Build Job Payload').item.json.email_html }) }}",
+        "options": {}
+      },
+      "name": "Send Email Without PDF",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1080, 420],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const payload = $('Build Job Payload').item.json;\nconst response = $input.item.json || {};\nconst statusCode = Number(response.statusCode || response.code || 0);\nconst hasError = Boolean(response.error) || (statusCode >= 400 && statusCode !== 0);\nconst sendOk = !hasError;\nconst errorText = hasError ? String(response.error?.message || response.message || JSON.stringify(response.error || response).slice(0, 1000)) : '';\n\nreturn {\n  json: {\n    job_id: payload.job_id,\n    send_ok: sendOk,\n    error_text: errorText\n  }\n};"
+      },
+      "name": "Build Send Outcome",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1740, 250]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const payload = $('Build Job Payload').item.json;\nconst pdfError = $input.item.json?.error || $input.item.json || {};\nconst message = String(pdfError.message || pdfError.description || JSON.stringify(pdfError).slice(0, 1000));\nreturn { json: { job_id: payload.job_id, send_ok: false, error_text: `PDF generation failed: ${message}` } };"
+      },
+      "name": "Build PDF Failure Outcome",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1520, 280]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.send_ok }}",
+              "value2": true,
+              "operation": "equal"
+            }
+          ]
+        }
+      },
+      "name": "Send OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1940, 250]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH updated_job AS (\n  UPDATE email_sequence_jobs\n  SET\n    status = 'sent',\n    sent_at = NOW(),\n    last_error = NULL,\n    updated_at = NOW()\n  WHERE id = $1\n    AND status = 'processing'\n  RETURNING lead_id, template_key\n)\nUPDATE leads l\nSET\n  week2_sent_at = CASE WHEN uj.template_key = 'week_2' THEN NOW() ELSE l.week2_sent_at END,\n  week3_sent_at = CASE WHEN uj.template_key = 'week_3' THEN NOW() ELSE l.week3_sent_at END,\n  week4_sent_at = CASE WHEN uj.template_key = 'week_4' THEN NOW() ELSE l.week4_sent_at END,\n  next_send_at = CASE\n    WHEN uj.template_key = 'week_2' THEN NOW() + interval '7 days'\n    WHEN uj.template_key = 'week_3' THEN NOW() + interval '7 days'\n    WHEN uj.template_key = 'week_4' THEN NULL\n    ELSE l.next_send_at\n  END,\n  completed_at = CASE WHEN uj.template_key = 'upsell_day_30' THEN NOW() ELSE l.completed_at END,\n  status = CASE WHEN uj.template_key = 'upsell_day_30' THEN 'completed' ELSE l.status END,\n  updated_at = NOW()\nFROM updated_job uj\nWHERE l.id = uj.lead_id;",
+        "options": {
+          "queryReplacement": "={{ [$json.job_id] }}"
+        }
+      },
+      "name": "Mark Job Sent",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
-      "position": [860, 300],
+      "position": [2160, 170],
       "credentials": {
         "postgres": {
           "id": "mdt-pg-cred",
@@ -67,63 +238,35 @@
     },
     {
       "parameters": {
-        "mode": "runOnceForEachItem",
-        "jsCode": "const payload = $('Build PDF Payload').item.json;\nconst template = $input.item.json;\n\nconst fill = (str, vars) => String(str || '').replace(/{{\\s*([a-zA-Z0-9_]+)\\s*}}/g, (_, key) => vars[key] ?? '');\n\nconst vars = {\n  name: payload.name || 'there',\n  week_number: payload.week_number,\n  calendar_url: payload.calendar_url || '',\n  week_pdf_url: '',\n  level2_offer_url: $env.LEVEL2_OFFER_URL || '',\n  goal: payload.goal || payload.profile?.primary_goal || payload.profile?.goal || ''\n};\n\nreturn {\n  json: {\n    lead_id: payload.lead_id,\n    name: payload.name,\n    email: payload.email,\n    week_number: payload.week_number,\n    template_key: payload.template_key,\n    week_plan: payload.week_plan,\n    profile: payload.profile,\n    calendar_url: payload.calendar_url,\n    email_subject: fill(template.subject, vars),\n    email_html: fill(template.html, vars),\n    attachment_filename: `week${payload.week_number}-plan.pdf`\n  }\n};"
+        "operation": "executeQuery",
+        "query": "UPDATE email_sequence_jobs\nSET\n  status = CASE WHEN attempts >= 3 THEN 'failed' ELSE 'pending' END,\n  last_error = LEFT($2, 2000),\n  updated_at = NOW()\nWHERE id = $1\n  AND status = 'processing';",
+        "options": {
+          "queryReplacement": "={{ [$json.job_id, $json.error_text || 'Unknown sending error'] }}"
+        }
       },
-      "name": "Render Email Template",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [1080, 300]
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "http://pdf-service:3001/generate-pdf",
-        "sendBody": true,
-        "contentType": "json",
-        "specifyBody": "json",
-        "jsonBody": "={{ ({ name: $json.name, week_number: $json.week_number, week_plan: $json.week_plan, profile: $json.profile, calendar_url: $json.calendar_url }) }}",
-        "options": {}
-      },
-      "name": "Generate PDF",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [1300, 300]
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://api.resend.com/emails",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            { "name": "Authorization", "value": "=Bearer {{ $env.RESEND_API_KEY }}" },
-            { "name": "Content-Type", "value": "application/json" }
-          ]
-        },
-        "sendBody": true,
-        "contentType": "json",
-        "specifyBody": "json",
-        "jsonBody": "={{ ({\n  from: $env.RESEND_FROM,\n  to: $('Render Email Template').item.json.email,\n  subject: $('Render Email Template').item.json.email_subject,\n  html: $('Render Email Template').item.json.email_html,\n  attachments: [\n    {\n      filename: $('Render Email Template').item.json.attachment_filename,\n      content: $json.pdf\n    }\n  ]\n}) }}",
-        "options": {}
-      },
-      "name": "Send Email",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [1520, 300]
+      "name": "Mark Job Failed",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [2160, 340],
+      "credentials": {
+        "postgres": {
+          "id": "mdt-pg-cred",
+          "name": "MDT Postgres"
+        }
+      }
     },
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "UPDATE leads\nSET\n  week1_sent_at = CASE WHEN $2 = 1 THEN NOW() ELSE week1_sent_at END,\n  week2_sent_at = CASE WHEN $2 = 2 THEN NOW() ELSE week2_sent_at END,\n  week3_sent_at = CASE WHEN $2 = 3 THEN NOW() ELSE week3_sent_at END,\n  week4_sent_at = CASE WHEN $2 = 4 THEN NOW() ELSE week4_sent_at END,\n  next_send_at = CASE WHEN $2 < 4 THEN NOW() + interval '7 days' ELSE NULL END,\n  updated_at = NOW()\nWHERE id = $1;",
+        "query": "UPDATE email_sequence_jobs\nSET\n  status = 'skipped',\n  updated_at = NOW(),\n  metadata = metadata || jsonb_build_object('skip_reason', 'lead_already_paid')\nWHERE id = $1\n  AND status = 'processing'\nRETURNING id, status;",
         "options": {
-          "queryReplacement": "={{ [$('Render Email Template').item.json.lead_id, Number($('Render Email Template').item.json.week_number)] }}"
+          "queryReplacement": "={{ [$json.job_id] }}"
         }
       },
-      "name": "Update sent_at",
+      "name": "Mark Job Skipped",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
-      "position": [1740, 300],
+      "position": [1080, 220],
       "credentials": {
         "postgres": {
           "id": "mdt-pg-cred",
@@ -133,55 +276,80 @@
     }
   ],
   "connections": {
-    "Daily 9am Trigger": {
+    "Every 10m Trigger": {
       "main": [
         [
           {
-            "node": "Find Due Leads",
+            "node": "Claim Due Jobs",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Find Due Leads": {
+    "Claim Due Jobs": {
       "main": [
         [
           {
-            "node": "Build PDF Payload",
+            "node": "Build Job Payload",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Build PDF Payload": {
+    "Build Job Payload": {
       "main": [
         [
           {
-            "node": "Load Email Template",
+            "node": "Evaluate Skip Rule",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Load Email Template": {
+    "Evaluate Skip Rule": {
       "main": [
         [
           {
-            "node": "Render Email Template",
+            "node": "Skip Paid No-Payment?",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Render Email Template": {
+    "Skip Paid No-Payment?": {
+      "main": [
+        [
+          {
+            "node": "Mark Job Skipped",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Requires PDF?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Requires PDF?": {
       "main": [
         [
           {
             "node": "Generate PDF",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Email Without PDF",
             "type": "main",
             "index": 0
           }
@@ -192,18 +360,87 @@
       "main": [
         [
           {
-            "node": "Send Email",
+            "node": "PDF Ready?",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Send Email": {
+    "PDF Ready?": {
       "main": [
         [
           {
-            "node": "Update sent_at",
+            "node": "Send Email With PDF",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build PDF Failure Outcome",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Email With PDF": {
+      "main": [
+        [
+          {
+            "node": "Build Send Outcome",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Email Without PDF": {
+      "main": [
+        [
+          {
+            "node": "Build Send Outcome",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Send Outcome": {
+      "main": [
+        [
+          {
+            "node": "Send OK?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build PDF Failure Outcome": {
+      "main": [
+        [
+          {
+            "node": "Mark Job Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send OK?": {
+      "main": [
+        [
+          {
+            "node": "Mark Job Sent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mark Job Failed",
             "type": "main",
             "index": 0
           }
