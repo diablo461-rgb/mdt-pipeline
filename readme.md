@@ -170,10 +170,12 @@ Tally (квиз) → POST /webhook/tally-webhook
   - генерирует персональный `program_plan` через `program-service` (`Generate Program`)
   - собирает и отправляет Week 1 PDF по email
   - ставит `week1_sent_at = NOW()` и `next_send_at = NOW() + 7 days`
+  - создаёт записи в `email_sequence_jobs` для будущих писем (week_2 +7d, week_3 +14d, feedback_day_21 +21d, week_4 +21d, upsell_day_30 +30d)
+  - использует `ON CONFLICT DO NOTHING` — повторный webhook не создаёт дублей
 
 **Важно для `Generate Program`:** `user_profile` из `Mark Lead as Paid` может прийти как `jsonb`-object, JSON-string, `null` или пустое значение. Workflow теперь безопасно нормализует его в object и не делает прямой `JSON.parse(undefined)`.
 
-### 4. MDT Weekly PDF Sender (`weekly-sender-workflow.json`)
+### 4. MDT Email Sequence Sender (`weekly-sender-workflow.json`)
 
 **Расписание:** каждый день в 09:00
 
@@ -181,27 +183,47 @@ Tally (квиз) → POST /webhook/tally-webhook
 
 ```
 Daily 9am Trigger
-  → Find Due Leads          (PostgreSQL: WHERE next_send_at <= NOW() AND week4_sent_at IS NULL)
-  → Build PDF Payload       (Code: формирует данные для PDF + определяет номер недели)
-  → Load Email Template     (PostgreSQL: SELECT из email_templates по template_key, fallback на week_1)
-  → Render Email Template   (Code: заменяет {{name}}, {{week_number}}, {{calendar_url}} и т.д.)
-  → Generate PDF            (HTTP POST → pdf-service:3001/generate-pdf)
-  → Send Email              (HTTP POST → api.resend.com/emails, PDF прикреплён как base64)
-  → Update sent_at          (PostgreSQL: UPDATE week{N}_sent_at = NOW(), next_send_at += 7 дней)
+  → Claim Due Jobs        (PostgreSQL: atomic UPDATE status='processing' ... RETURNING, SKIP LOCKED)
+  → Load Job Context      (PostgreSQL: JOIN leads + email_templates по job.lead_id + job.template_key)
+  → Build Email Payload   (Code: рендерит переменные, формирует PDF-payload если нужен PDF)
+  → Needs PDF?            (IF: email_templates.requires_pdf = true)
+      [true]  → Generate PDF   (HTTP POST → pdf-service:3001/generate-pdf)
+              → Attach PDF     (Code: добавляет attachments[])
+      [false] → No PDF         (Code: пустой attachments[])
+  → Send Email            (HTTP POST → api.resend.com/emails)
+  → Mark Job Sent         (PostgreSQL: UPDATE email_sequence_jobs status='sent', sent_at=NOW())
+  → Update Legacy Columns (PostgreSQL: UPDATE week{N}_sent_at, completed_at на leads)
 ```
 
-**Логика определения недели:**
+**Email sequence (level_1_post_payment):**
+
+| template_key      | scheduled_at        | requires_pdf |
+|-------------------|---------------------|--------------|
+| `week_1`          | immediately (sent)       | ✓ (PDF)      |
+| `week_2`          | NOW() + 7 days           | ✓ (PDF)      |
+| `week_3`          | NOW() + 14 days          | ✓ (PDF)      |
+| `feedback_day_21` | NOW() + 21 days − 1 hour | ✗            |
+| `week_4`          | NOW() + 21 days          | ✓ (PDF)      |
+| `upsell_day_30`   | NOW() + 30 days          | ✗            |
+
+> `feedback_day_21` is scheduled 1 hour before `week_4` so it is always processed first in the same day's batch.
+
+**Атомарный захват задач (без дублей):**
 
 ```sql
-CASE
-  WHEN week1_sent_at IS NULL THEN 1
-  WHEN week2_sent_at IS NULL THEN 2
-  WHEN week3_sent_at IS NULL THEN 3
-  WHEN week4_sent_at IS NULL THEN 4
-END AS week_to_send
+UPDATE email_sequence_jobs SET status = 'processing'
+WHERE id IN (
+  SELECT j.id FROM email_sequence_jobs j
+  JOIN leads l ON l.id = j.lead_id AND l.status = 'paid'
+  JOIN email_templates t ON t.template_key = j.template_key AND t.is_active = TRUE
+  WHERE j.status = 'pending' AND j.scheduled_at <= NOW()
+  ORDER BY j.scheduled_at FOR UPDATE OF j SKIP LOCKED LIMIT 20
+)
+RETURNING id AS job_id, lead_id, email, template_key, sequence_key, metadata, attempts;
 ```
 
-После отправки недели 4 поле `next_send_at` становится `NULL` (отправки прекращаются).
+После успешной отправки `status = 'sent'`, `sent_at = NOW()`.
+При ошибке `attempts` увеличивается, `last_error` заполняется, при `attempts >= 3` статус переходит в `failed`.
 
 ---
 
@@ -264,14 +286,17 @@ cat /tmp/paddle_txn_check.json
 | `paddle_customer_id`  | VARCHAR      | ID клиента Paddle                     |
 | `checkout_url`        | TEXT         | Paddle checkout URL (`?_ptxn=txn_xxx`) |
 | `paid_amount`         | DECIMAL      | Сумма оплаты (в основной единице валюты) |
-| `week1_sent_at`       | TIMESTAMP    | Дата отправки письма недели 1         |
-| `week2_sent_at`       | TIMESTAMP    | Дата отправки письма недели 2         |
-| `week3_sent_at`       | TIMESTAMP    | Дата отправки письма недели 3         |
-| `week4_sent_at`       | TIMESTAMP    | Дата отправки письма недели 4         |
-| `next_send_at`        | TIMESTAMP    | Следующая запланированная отправка    |
+| `week1_sent_at`       | TIMESTAMP    | Дата отправки письма недели 1 (legacy) |
+| `week2_sent_at`       | TIMESTAMP    | Дата отправки письма недели 2 (legacy) |
+| `week3_sent_at`       | TIMESTAMP    | Дата отправки письма недели 3 (legacy) |
+| `week4_sent_at`       | TIMESTAMP    | Дата отправки письма недели 4 (legacy) |
+| `next_send_at`        | TIMESTAMP    | Следующая запланированная отправка (legacy) |
+| `completed_at`        | TIMESTAMP    | Дата завершения курса (upsell_day_30 sent) |
 | `status`              | VARCHAR(50)  | Статус лида (default: `new`)          |
 | `created_at`          | TIMESTAMP    | Время создания записи                 |
 | `updated_at`          | TIMESTAMP    | Время последнего обновления           |
+
+> **Примечание:** колонки `week{N}_sent_at` и `next_send_at` сохраняются для обратной совместимости. Новая логика отправки идёт через `email_sequence_jobs`.
 
 Индексы/ограничения, используемые workflow:
 - `UNIQUE (email)` для `ON CONFLICT (email)`
@@ -302,44 +327,101 @@ cat /tmp/paddle_txn_check.json
 
 ### Таблица `email_templates`
 
-Хранит HTML-шаблоны писем для каждой недели и upsell.
+Хранит HTML-шаблоны писем. Управляется через SQL-функции.
 
-| `template_key`  | Описание                        |
-|-----------------|---------------------------------|
-| `week_1`        | Письмо при старте (неделя 1)    |
-| `week_2`        | Напоминание — неделя 2          |
-| `week_3`        | Напоминание — неделя 3          |
-| `week_4`        | Финальная неделя                |
-| `upsell_day_30` | Upsell после завершения курса   |
+| `template_key`      | Описание                          | `requires_pdf` |
+|---------------------|-----------------------------------|---------------|
+| `week_1`            | Письмо при старте (неделя 1)      | ✓ true        |
+| `week_2`            | Неделя 2 (+7 дней)               | ✓ true        |
+| `week_3`            | Неделя 3 (+14 дней)              | ✓ true        |
+| `feedback_day_21`   | Обратная связь на день 21         | ✗ false       |
+| `week_4`            | Неделя 4 (+21 день)              | ✓ true        |
+| `upsell_day_30`     | Upsell после завершения курса     | ✗ false       |
+
+Поле `requires_pdf`:
+- `true` — workflow сгенерирует PDF через `pdf-service` и приложит как вложение
+- `false` — письмо отправляется без вложения (только HTML)
 
 **Переменные в шаблонах:**
 
-| Переменная          | Значение                       |
-|---------------------|--------------------------------|
-| `{{name}}`          | Имя клиента                    |
-| `{{week_number}}`   | Номер текущей недели           |
-| `{{calendar_url}}`  | Ссылка на добавление в календарь |
-| `{{level2_offer_url}}` | Ссылка на Level 2 upsell    |
+| Переменная            | Значение                              | Источник                    |
+|-----------------------|---------------------------------------|-----------------------------|
+| `{{Name}}`            | Имя клиента (с заглавной буквы)       | `leads.name`                |
+| `{{name}}`            | Имя клиента (строчные)                | `leads.name`                |
+| `{{week_number}}`     | Номер текущей недели                  | из `template_key`           |
+| `{{calendar_url}}`    | Ссылка на добавление в календарь      | `CALENDAR_WEEK{N}_URL` / `CALENDAR_DEFAULT_URL` |
+| `{{level2_offer_url}}`| Ссылка на Level 2 upsell             | `LEVEL2_OFFER_URL`          |
+| `{{feedback_url}}`    | Ссылка на форму обратной связи        | `FEEDBACK_FORM_URL`         |
+| `{{goal}}`            | Цель клиента из профиля               | `user_profile.primary_goal` |
+
+### Таблица `email_sequence_jobs`
+
+Универсальная очередь запланированных отправок. Является единственным источником истины о том, что и когда отправлять.
+
+| Поле           | Тип            | Описание                                              |
+|----------------|----------------|-------------------------------------------------------|
+| `id`           | BIGSERIAL PK   |                                                       |
+| `lead_id`      | INTEGER FK     | Ссылка на `leads(id)`                                 |
+| `email`        | VARCHAR(255)   | Email получателя                                      |
+| `template_key` | VARCHAR(100)   | Ключ шаблона из `email_templates`                     |
+| `sequence_key` | VARCHAR(100)   | Имя последовательности (default: `level_1_post_payment`) |
+| `status`       | VARCHAR(30)    | `pending` / `processing` / `sent` / `failed` / `skipped` |
+| `scheduled_at` | TIMESTAMP      | Когда отправить                                       |
+| `sent_at`      | TIMESTAMP      | Когда было отправлено (NULL если не отправлено)       |
+| `attempts`     | INT            | Количество попыток отправки                           |
+| `last_error`   | TEXT           | Текст последней ошибки                               |
+| `metadata`     | JSONB          | Метаданные (например, `{"week_number": 2}`)           |
+| `created_at`   | TIMESTAMP      | Время создания записи                                 |
+| `updated_at`   | TIMESTAMP      | Время последнего обновления                           |
+
+Ограничения:
+- `UNIQUE (lead_id, sequence_key, template_key)` — исключает дубли при повторных вебхуках
+- `CHECK (status IN ('pending', 'processing', 'sent', 'failed', 'skipped'))`
+- `idx_email_seq_jobs_status_sched` на `(status, scheduled_at)` — для быстрого выбора due jobs
+- `idx_email_seq_jobs_lead_id` на `(lead_id)`
+
+### Как добавить новый email-шаблон (например, Bounce from up sale)
+
+1. Добавить запись в `email_templates`:
+
+```sql
+SELECT upsert_email_template(
+  'bounce_upsell_no_payment',
+  'MDT Level 2 — Still available',
+  '<div><p>Hi {{Name}}, ...</p></div>',
+  TRUE,   -- is_active
+  FALSE   -- requires_pdf
+);
+```
+
+2. Создать `email_sequence_job` для конкретного лида с нужным `scheduled_at`:
+
+```sql
+INSERT INTO email_sequence_jobs (lead_id, email, template_key, sequence_key, status, scheduled_at)
+SELECT l.id, l.email, 'bounce_upsell_no_payment', 'level_1_post_payment', 'pending', NOW() + interval '3 days'
+FROM leads l WHERE l.email = 'user@example.com'
+ON CONFLICT (lead_id, sequence_key, template_key) DO NOTHING;
+```
+
+3. `MDT Email Sequence Sender` автоматически подхватит задачу в следующий запуск в 09:00. Изменений в workflow JSON не требуется.
 
 ### Управление шаблонами (SQL)
 
 ```sql
 -- Просмотр всех шаблонов
-SELECT * FROM email_templates_admin;
+SELECT template_key, subject, requires_pdf, is_active FROM email_templates_admin;
 
 -- Создать или обновить шаблон
 SELECT upsert_email_template(
   'week_2',
   'MDT Plan - Week 2: Keep It Going',
-  '<div><p>Hi {{name}}, welcome to Week 2...</p></div>',
-  TRUE
+  '<div><p>Hi {{Name}}, welcome to Week 2...</p></div>',
+  TRUE,   -- is_active
+  TRUE    -- requires_pdf
 );
 
 -- Выключить шаблон
 SELECT set_email_template_active('week_3', FALSE);
-
--- Включить обратно
-SELECT set_email_template_active('week_3', TRUE);
 ```
 
 ---

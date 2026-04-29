@@ -45,6 +45,7 @@ ALTER TABLE leads ADD COLUMN IF NOT EXISTS week2_sent_at TIMESTAMP;
 ALTER TABLE leads ADD COLUMN IF NOT EXISTS week3_sent_at TIMESTAMP;
 ALTER TABLE leads ADD COLUMN IF NOT EXISTS week4_sent_at TIMESTAMP;
 ALTER TABLE leads ADD COLUMN IF NOT EXISTS next_send_at TIMESTAMP;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS completed_at TIMESTAMP;
 
 DO $$
 BEGIN
@@ -119,12 +120,59 @@ CREATE TABLE IF NOT EXISTS email_templates (
     subject TEXT NOT NULL,
     html TEXT NOT NULL,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    requires_pdf BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS idx_email_templates_key ON email_templates(template_key);
 CREATE INDEX IF NOT EXISTS idx_email_templates_active ON email_templates(is_active);
+-- Additive: adds requires_pdf to existing databases that already have email_templates without it.
+-- On a fresh install the column is already defined in CREATE TABLE above; this is a no-op.
+ALTER TABLE email_templates ADD COLUMN IF NOT EXISTS requires_pdf BOOLEAN NOT NULL DEFAULT FALSE;
+
+CREATE TABLE IF NOT EXISTS email_sequence_jobs (
+    id BIGSERIAL PRIMARY KEY,
+    lead_id INTEGER NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    template_key VARCHAR(100) NOT NULL,
+    sequence_key VARCHAR(100) NOT NULL DEFAULT 'level_1_post_payment',
+    status VARCHAR(30) NOT NULL DEFAULT 'pending',
+    scheduled_at TIMESTAMP NOT NULL,
+    sent_at TIMESTAMP,
+    attempts INT NOT NULL DEFAULT 0,
+    last_error TEXT,
+    metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    CONSTRAINT email_sequence_jobs_status_chk CHECK (status IN ('pending', 'processing', 'sent', 'failed', 'skipped'))
+);
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'email_sequence_jobs_lead_fk'
+  ) THEN
+    ALTER TABLE email_sequence_jobs
+    ADD CONSTRAINT email_sequence_jobs_lead_fk
+    FOREIGN KEY (lead_id) REFERENCES leads(id) ON DELETE CASCADE;
+  END IF;
+END
+$$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'email_sequence_jobs_unique'
+  ) THEN
+    ALTER TABLE email_sequence_jobs
+    ADD CONSTRAINT email_sequence_jobs_unique UNIQUE (lead_id, sequence_key, template_key);
+  END IF;
+END
+$$;
+
+CREATE INDEX IF NOT EXISTS idx_email_seq_jobs_status_sched ON email_sequence_jobs(status, scheduled_at);
+CREATE INDEX IF NOT EXISTS idx_email_seq_jobs_lead_id ON email_sequence_jobs(lead_id);
 
 CREATE OR REPLACE VIEW email_templates_admin AS
 SELECT
@@ -133,6 +181,7 @@ SELECT
   subject,
   html,
   is_active,
+  requires_pdf,
   created_at,
   updated_at
 FROM email_templates
@@ -142,7 +191,8 @@ CREATE OR REPLACE FUNCTION upsert_email_template(
   p_template_key VARCHAR,
   p_subject TEXT,
   p_html TEXT,
-  p_is_active BOOLEAN DEFAULT TRUE
+  p_is_active BOOLEAN DEFAULT TRUE,
+  p_requires_pdf BOOLEAN DEFAULT FALSE
 )
 RETURNS email_templates
 LANGUAGE plpgsql
@@ -150,13 +200,14 @@ AS $$
 DECLARE
   v_row email_templates;
 BEGIN
-  INSERT INTO email_templates (template_key, subject, html, is_active, updated_at)
-  VALUES (p_template_key, p_subject, p_html, p_is_active, NOW())
+  INSERT INTO email_templates (template_key, subject, html, is_active, requires_pdf, updated_at)
+  VALUES (p_template_key, p_subject, p_html, p_is_active, p_requires_pdf, NOW())
   ON CONFLICT (template_key)
   DO UPDATE SET
     subject = EXCLUDED.subject,
     html = EXCLUDED.html,
     is_active = EXCLUDED.is_active,
+    requires_pdf = EXCLUDED.requires_pdf,
     updated_at = NOW()
   RETURNING * INTO v_row;
 
