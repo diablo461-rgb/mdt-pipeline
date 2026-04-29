@@ -127,6 +127,8 @@ CREATE TABLE IF NOT EXISTS email_templates (
 
 CREATE INDEX IF NOT EXISTS idx_email_templates_key ON email_templates(template_key);
 CREATE INDEX IF NOT EXISTS idx_email_templates_active ON email_templates(is_active);
+-- Additive: adds requires_pdf to existing databases that already have email_templates without it.
+-- On a fresh install the column is already defined in CREATE TABLE above; this is a no-op.
 ALTER TABLE email_templates ADD COLUMN IF NOT EXISTS requires_pdf BOOLEAN NOT NULL DEFAULT FALSE;
 
 CREATE TABLE IF NOT EXISTS email_sequence_jobs (

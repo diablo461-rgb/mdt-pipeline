@@ -199,12 +199,14 @@ Daily 9am Trigger
 
 | template_key      | scheduled_at        | requires_pdf |
 |-------------------|---------------------|--------------|
-| `week_1`          | immediately (sent)  | ✓ (PDF)      |
-| `week_2`          | NOW() + 7 days      | ✓ (PDF)      |
-| `week_3`          | NOW() + 14 days     | ✓ (PDF)      |
-| `feedback_day_21` | NOW() + 21 days     | ✗            |
-| `week_4`          | NOW() + 21 days     | ✓ (PDF)      |
-| `upsell_day_30`   | NOW() + 30 days     | ✗            |
+| `week_1`          | immediately (sent)       | ✓ (PDF)      |
+| `week_2`          | NOW() + 7 days           | ✓ (PDF)      |
+| `week_3`          | NOW() + 14 days          | ✓ (PDF)      |
+| `feedback_day_21` | NOW() + 21 days − 1 hour | ✗            |
+| `week_4`          | NOW() + 21 days          | ✓ (PDF)      |
+| `upsell_day_30`   | NOW() + 30 days          | ✗            |
+
+> `feedback_day_21` is scheduled 1 hour before `week_4` so it is always processed first in the same day's batch.
 
 **Атомарный захват задач (без дублей):**
 
