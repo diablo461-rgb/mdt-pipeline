@@ -132,7 +132,7 @@
     {
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const planData = $('Generate Program').first().json;\nconst normalized = $('Normalize User Profile').first().json || {};\nconst paidLead = $('Mark Lead as Paid').first().json || {};\nconst profile = normalized.user_profile || {};\n\nconst programPlan = planData.program_plan || {};\nconst weekNum = 1;\nconst weekKey = 'week_1';\nconst weekPlan = programPlan[weekKey] || {};\n\nconst sessions = ['morning', 'midday', 'afternoon', 'evening'];\nconst weekPlanForPdf = {};\nfor (const s of sessions) {\n  const slot = weekPlan[s] || {};\n  weekPlanForPdf[s] = {\n    warmup: slot.warmup ? {\n      name: slot.warmup.name,\n      description: slot.warmup.description,\n      image_url: slot.warmup.image_url || slot.warmup.imageUrl || slot.warmup.image || slot.warmup.photo_url || slot.warmup.photoUrl || '',\n      cues: slot.warmup.cues\n    } : null,\n    main: slot.main ? {\n      name: slot.main.name,\n      description: slot.main.description,\n      image_url: slot.main.image_url || slot.main.imageUrl || slot.main.image || slot.main.photo_url || slot.main.photoUrl || '',\n      cues: slot.main.cues\n    } : null\n  };\n}\n\nconst calendarMap = {\n  1: $env.CALENDAR_WEEK1_URL || '',\n  2: $env.CALENDAR_WEEK2_URL || '',\n  3: $env.CALENDAR_WEEK3_URL || '',\n  4: $env.CALENDAR_WEEK4_URL || ''\n};\n\nreturn [{\n  json: {\n    name: normalized.name || paidLead.name || 'there',\n    email: normalized.email || paidLead.email || '',\n    week_number: weekNum,\n    template_key: weekKey,\n    week_plan: weekPlanForPdf,\n    profile,\n    calendar_url: calendarMap[weekNum] || $env.CALENDAR_DEFAULT_URL || ''\n  }\n}];"
+        "jsCode": "const planData = $('Generate Program').first().json;\nconst normalized = $('Normalize User Profile').first().json || {};\nconst paidLead = $('Mark Lead as Paid').first().json || {};\nconst profile = normalized.user_profile || {};\n\nconst programPlan = planData.program_plan || {};\nconst weekNum = 1;\nconst weekKey = 'week_1';\nconst weekPlan = programPlan[weekKey] || {};\n\nconst sessions = ['morning', 'midday', 'afternoon', 'evening'];\nconst weekPlanForPdf = {};\nfor (const s of sessions) {\n  const slot = weekPlan[s] || {};\n  weekPlanForPdf[s] = {\n    warmup: slot.warmup ? {\n      name: slot.warmup.name,\n      description: slot.warmup.description,\n      image_url: slot.warmup.image_url || slot.warmup.imageUrl || slot.warmup.image || slot.warmup.photo_url || slot.warmup.photoUrl || '',\n      cues: slot.warmup.cues,\n      progression: slot.warmup.progression || '',\n      regression: slot.warmup.regression || ''\n    } : null,\n    main: slot.main ? {\n      name: slot.main.name,\n      description: slot.main.description,\n      image_url: slot.main.image_url || slot.main.imageUrl || slot.main.image || slot.main.photo_url || slot.main.photoUrl || '',\n      cues: slot.main.cues,\n      progression: slot.main.progression || '',\n      regression: slot.main.regression || ''\n    } : null\n  };\n}\n\nconst calendarMap = {\n  1: $env.CALENDAR_WEEK1_URL || '',\n  2: $env.CALENDAR_WEEK2_URL || '',\n  3: $env.CALENDAR_WEEK3_URL || '',\n  4: $env.CALENDAR_WEEK4_URL || ''\n};\n\nreturn [{\n  json: {\n    name: normalized.name || paidLead.name || 'there',\n    email: normalized.email || paidLead.email || '',\n    week_number: weekNum,\n    template_key: weekKey,\n    week_plan: weekPlanForPdf,\n    profile,\n    calendar_url: calendarMap[weekNum] || $env.CALENDAR_DEFAULT_URL || ''\n  }\n}];"
       },
       "name": "Build PDF Payload",
       "type": "n8n-nodes-base.code",
@@ -258,7 +258,10 @@
       "name": "Enqueue Sequence Jobs",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
-      "position": [4100, 180],
+      "position": [
+        4100,
+        180
+      ],
       "credentials": {
         "postgres": {
           "id": "mdt-pg-cred",
@@ -303,7 +306,10 @@
       "name": "Skip Pending No Payment Bounce Jobs",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
-      "position": [1500, 180],
+      "position": [
+        1500,
+        180
+      ],
       "credentials": {
         "postgres": {
           "id": "mdt-pg-cred",

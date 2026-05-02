@@ -17,7 +17,10 @@
       "name": "Every 10m Trigger",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
-      "position": [200, 300]
+      "position": [
+        200,
+        300
+      ]
     },
     {
       "parameters": {
@@ -28,7 +31,10 @@
       "name": "Claim Due Jobs",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
-      "position": [420, 300],
+      "position": [
+        420,
+        300
+      ],
       "credentials": {
         "postgres": {
           "id": "mdt-pg-cred",
@@ -39,12 +45,15 @@
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const job = $input.item.json || {};\nconst parseMaybeJson = (value) => {\n  if (!value) return {};\n  if (typeof value === 'object') return value;\n  if (typeof value === 'string') {\n    try {\n      const parsed = JSON.parse(value);\n      return parsed && typeof parsed === 'object' ? parsed : {};\n    } catch {\n      return {};\n    }\n  }\n  return {};\n};\n\nconst metadata = parseMaybeJson(job.metadata);\nconst profile = parseMaybeJson(job.user_profile);\nconst programPlan = parseMaybeJson(job.program_plan);\nconst weekMatch = String(job.template_key || '').match(/^week_(\\d+)$/);\nconst weekNumber = Number(metadata.week_number || (weekMatch ? weekMatch[1] : 0)) || null;\n\nconst sessions = ['morning', 'midday', 'afternoon', 'evening'];\nconst pickImageUrl = (exercise = {}) => exercise.image_url || exercise.imageUrl || exercise.image || exercise.photo_url || exercise.photoUrl || '';\nconst mapExercise = (exercise) => exercise ? ({\n  name: exercise.name,\n  description: exercise.description,\n  image_url: pickImageUrl(exercise),\n  cues: exercise.cues\n}) : null;\n\nconst weekPlanRaw = weekNumber ? (programPlan[`week_${weekNumber}`] || {}) : {};\nconst weekPlan = {};\nfor (const s of sessions) {\n  const slot = weekPlanRaw[s] || {};\n  weekPlan[s] = {\n    warmup: mapExercise(slot.warmup),\n    main: mapExercise(slot.main)\n  };\n}\n\nconst calendarMap = {\n  1: $env.CALENDAR_WEEK1_URL || '',\n  2: $env.CALENDAR_WEEK2_URL || '',\n  3: $env.CALENDAR_WEEK3_URL || '',\n  4: $env.CALENDAR_WEEK4_URL || ''\n};\nconst calendarUrl = weekNumber ? (calendarMap[weekNumber] || $env.CALENDAR_DEFAULT_URL || '') : ($env.CALENDAR_DEFAULT_URL || '');\n\nconst txnId = String(job.paddle_transaction_id || '');\nconst checkoutFromLead = String(job.checkout_url || '').trim();\nconst paddleBase = String($env.PADDLE_API_URL || '').includes('sandbox') ? 'https://sandbox-buy.paddle.com' : 'https://buy.paddle.com';\nconst checkoutUrl = checkoutFromLead || (txnId ? `${paddleBase}/checkout/${txnId}` : '');\n\nconst fill = (str, vars) => String(str || '').replace(/{{\\s*([a-zA-Z0-9_]+)\\s*}}/g, (_, key) => String(vars[key] ?? ''));\nconst safeName = String(job.name || 'there');\nconst goal = profile.primary_goal || profile.goal || '';\nconst vars = {\n  name: safeName,\n  Name: safeName,\n  goal,\n  week_number: weekNumber || '',\n  calendar_url: calendarUrl,\n  week_pdf_url: '',\n  level2_offer_url: $env.LEVEL2_OFFER_URL || '',\n  feedback_url: $env.FEEDBACK_FORM_URL || '',\n  checkout_url: checkoutUrl,\n  mdt_blog_url: $env.MDT_BLOG_URL || ''\n};\n\nconst requiresPdf = String(job.sequence_key || '') === 'no_payment_bounce'\n  ? false\n  : Boolean(job.requires_pdf || String(job.template_key || '').startsWith('week_') || metadata.requires_pdf === true);\n\nconst isPaid = String(job.lead_status || '').toLowerCase() === 'paid' || Boolean(job.payment_date);\n\nreturn {\n  json: {\n    job_id: Number(job.job_id),\n    lead_id: Number(job.lead_id),\n    sequence_key: String(job.sequence_key || ''),\n    template_key: String(job.template_key || ''),\n    email: String(job.email || ''),\n    name: safeName,\n    week_number: weekNumber,\n    requires_pdf: requiresPdf,\n    is_paid: isPaid,\n    profile,\n    week_plan: weekPlan,\n    calendar_url: calendarUrl,\n    checkout_url: checkoutUrl,\n    email_subject: fill(job.template_subject, vars),\n    email_html: fill(job.template_html, vars),\n    attachment_filename: weekNumber ? `week${weekNumber}-plan.pdf` : 'mdt-plan.pdf'\n  }\n};"
+        "jsCode": "const job = $input.item.json || {};\nconst parseMaybeJson = (value) => {\n  if (!value) return {};\n  if (typeof value === 'object') return value;\n  if (typeof value === 'string') {\n    try {\n      const parsed = JSON.parse(value);\n      return parsed && typeof parsed === 'object' ? parsed : {};\n    } catch {\n      return {};\n    }\n  }\n  return {};\n};\n\nconst metadata = parseMaybeJson(job.metadata);\nconst profile = parseMaybeJson(job.user_profile);\nconst programPlan = parseMaybeJson(job.program_plan);\nconst weekMatch = String(job.template_key || '').match(/^week_(\\d+)$/);\nconst weekNumber = Number(metadata.week_number || (weekMatch ? weekMatch[1] : 0)) || null;\n\nconst sessions = ['morning', 'midday', 'afternoon', 'evening'];\nconst pickImageUrl = (exercise = {}) => exercise.image_url || exercise.imageUrl || exercise.image || exercise.photo_url || exercise.photoUrl || '';\nconst mapExercise = (exercise) => exercise ? ({\n  name: exercise.name,\n  description: exercise.description,\n  image_url: pickImageUrl(exercise),\n  cues: exercise.cues,\n  progression: exercise.progression || '',\n  regression: exercise.regression || ''\n}) : null;\n\nconst weekPlanRaw = weekNumber ? (programPlan[`week_${weekNumber}`] || {}) : {};\nconst weekPlan = {};\nfor (const s of sessions) {\n  const slot = weekPlanRaw[s] || {};\n  weekPlan[s] = {\n    warmup: mapExercise(slot.warmup),\n    main: mapExercise(slot.main)\n  };\n}\n\nconst calendarMap = {\n  1: $env.CALENDAR_WEEK1_URL || '',\n  2: $env.CALENDAR_WEEK2_URL || '',\n  3: $env.CALENDAR_WEEK3_URL || '',\n  4: $env.CALENDAR_WEEK4_URL || ''\n};\nconst calendarUrl = weekNumber ? (calendarMap[weekNumber] || $env.CALENDAR_DEFAULT_URL || '') : ($env.CALENDAR_DEFAULT_URL || '');\n\nconst txnId = String(job.paddle_transaction_id || '');\nconst checkoutFromLead = String(job.checkout_url || '').trim();\nconst paddleBase = String($env.PADDLE_API_URL || '').includes('sandbox') ? 'https://sandbox-buy.paddle.com' : 'https://buy.paddle.com';\nconst checkoutUrl = checkoutFromLead || (txnId ? `${paddleBase}/checkout/${txnId}` : '');\n\nconst fill = (str, vars) => String(str || '').replace(/{{\\s*([a-zA-Z0-9_]+)\\s*}}/g, (_, key) => String(vars[key] ?? ''));\nconst safeName = String(job.name || 'there');\nconst goal = profile.primary_goal || profile.goal || '';\nconst vars = {\n  name: safeName,\n  Name: safeName,\n  goal,\n  week_number: weekNumber || '',\n  calendar_url: calendarUrl,\n  week_pdf_url: '',\n  level2_offer_url: $env.LEVEL2_OFFER_URL || '',\n  feedback_url: $env.FEEDBACK_FORM_URL || '',\n  checkout_url: checkoutUrl,\n  mdt_blog_url: $env.MDT_BLOG_URL || ''\n};\n\nconst requiresPdf = String(job.sequence_key || '') === 'no_payment_bounce'\n  ? false\n  : Boolean(job.requires_pdf || String(job.template_key || '').startsWith('week_') || metadata.requires_pdf === true);\n\nconst isPaid = String(job.lead_status || '').toLowerCase() === 'paid' || Boolean(job.payment_date);\n\nreturn {\n  json: {\n    job_id: Number(job.job_id),\n    lead_id: Number(job.lead_id),\n    sequence_key: String(job.sequence_key || ''),\n    template_key: String(job.template_key || ''),\n    email: String(job.email || ''),\n    name: safeName,\n    week_number: weekNumber,\n    requires_pdf: requiresPdf,\n    is_paid: isPaid,\n    profile,\n    week_plan: weekPlan,\n    calendar_url: calendarUrl,\n    checkout_url: checkoutUrl,\n    email_subject: fill(job.template_subject, vars),\n    email_html: fill(job.template_html, vars),\n    attachment_filename: weekNumber ? `week${weekNumber}-plan.pdf` : 'mdt-plan.pdf'\n  }\n};"
       },
       "name": "Build Job Payload",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [640, 300]
+      "position": [
+        640,
+        300
+      ]
     },
     {
       "parameters": {
@@ -54,7 +63,10 @@
       "name": "Evaluate Skip Rule",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [760, 300]
+      "position": [
+        760,
+        300
+      ]
     },
     {
       "parameters": {
@@ -71,7 +83,10 @@
       "name": "Skip Paid No-Payment?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 1,
-      "position": [860, 300]
+      "position": [
+        860,
+        300
+      ]
     },
     {
       "parameters": {
@@ -88,7 +103,10 @@
       "name": "Requires PDF?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 1,
-      "position": [980, 420]
+      "position": [
+        980,
+        420
+      ]
     },
     {
       "parameters": {
@@ -103,7 +121,10 @@
       "name": "Generate PDF",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1080, 180],
+      "position": [
+        1080,
+        180
+      ],
       "continueOnFail": true
     },
     {
@@ -120,7 +141,10 @@
       "name": "PDF Ready?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 1,
-      "position": [1300, 180]
+      "position": [
+        1300,
+        180
+      ]
     },
     {
       "parameters": {
@@ -148,7 +172,10 @@
       "name": "Send Email With PDF",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1520, 100],
+      "position": [
+        1520,
+        100
+      ],
       "continueOnFail": true
     },
     {
@@ -177,7 +204,10 @@
       "name": "Send Email Without PDF",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1080, 420],
+      "position": [
+        1080,
+        420
+      ],
       "continueOnFail": true
     },
     {
@@ -188,7 +218,10 @@
       "name": "Build Send Outcome",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1740, 250]
+      "position": [
+        1740,
+        250
+      ]
     },
     {
       "parameters": {
@@ -198,7 +231,10 @@
       "name": "Build PDF Failure Outcome",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1520, 280]
+      "position": [
+        1520,
+        280
+      ]
     },
     {
       "parameters": {
@@ -215,7 +251,10 @@
       "name": "Send OK?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 1,
-      "position": [1940, 250]
+      "position": [
+        1940,
+        250
+      ]
     },
     {
       "parameters": {
@@ -228,7 +267,10 @@
       "name": "Mark Job Sent",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
-      "position": [2160, 170],
+      "position": [
+        2160,
+        170
+      ],
       "credentials": {
         "postgres": {
           "id": "mdt-pg-cred",
@@ -247,7 +289,10 @@
       "name": "Mark Job Failed",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
-      "position": [2160, 340],
+      "position": [
+        2160,
+        340
+      ],
       "credentials": {
         "postgres": {
           "id": "mdt-pg-cred",
@@ -266,7 +311,10 @@
       "name": "Mark Job Skipped",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
-      "position": [1080, 220],
+      "position": [
+        1080,
+        220
+      ],
       "credentials": {
         "postgres": {
           "id": "mdt-pg-cred",

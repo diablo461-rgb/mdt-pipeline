@@ -145,6 +145,8 @@ function buildProgramPlan(profile, allExercises) {
           movement_type: wu.movement_type,
           image_url: mapExerciseImage(wu),
           cues: wu.cues,
+          progression: wu.progression || '',
+          regression: wu.regression || '',
         } : null,
         main: mx ? {
           ex_id: mx.ex_id,
@@ -157,6 +159,8 @@ function buildProgramPlan(profile, allExercises) {
           primary_goal: mx.primary_goal,
           image_url: mapExerciseImage(mx),
           cues: mx.cues,
+          progression: mx.progression || '',
+          regression: mx.regression || '',
         } : null,
       };
     }
