@@ -20,7 +20,6 @@ module.exports = {
     ['intermediate'],
     ['intermediate', 'advanced'],
     ['advanced'],
-    ['advanced'],
+    ['advanced', 'flow'],
   ],
 };
-

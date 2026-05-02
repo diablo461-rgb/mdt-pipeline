@@ -15,4 +15,3 @@ const equipMap = {
 };
 
 module.exports = { spaceMap, equipMap };
-

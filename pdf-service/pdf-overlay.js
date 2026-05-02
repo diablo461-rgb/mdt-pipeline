@@ -11,6 +11,12 @@ const sharp = require('sharp');
 const PAGE_H = 842;
 const toY = (top) => PAGE_H - top;
 
+// IMAGE QUALITY FIX:
+// PDF uses points, not pixels. If we rasterize image as 179x163 px,
+// it will look blurry in PDF. Scale raster image up, but draw it
+// into the same PDF box size.
+const IMAGE_SCALE = 3;
+
 const DARK = rgb(0.13, 0.13, 0.13);
 const DARK_SEC = rgb(0.40, 0.38, 0.35);
 const WHITE = rgb(1.0, 1.0, 1.0);
@@ -369,18 +375,30 @@ function parseImageUrl(value) {
   const md = str.match(/\((https?:\/\/[^\s)]+)\)/i);
   const raw = md ? md[1] : (str.match(/https?:\/\/[^\s"')]+/i)?.[0] ?? str);
   const id = extractGdriveId(raw);
+
+  // IMAGE QUALITY FIX:
+  // Do not convert Drive URLs to thumbnail here.
+  // Use original download URL first. Thumbnails are compressed previews
+  // and often look blurry inside generated PDFs.
   return id
-      ? `https://drive.google.com/thumbnail?id=${id}&sz=w1600`
+      ? `https://drive.google.com/uc?export=download&id=${id}`
       : raw.startsWith('http') ? raw : '';
 }
 
 function buildFetchCandidates(url) {
-  const id = extractGdriveId(url);
-  if (!id) return url ? [url] : [];
+  const parsed = parseImageUrl(url);
+  const id = extractGdriveId(url) || extractGdriveId(parsed);
+
+  if (!id) return parsed ? [parsed] : [];
+
+  // IMAGE QUALITY FIX:
+  // Try original file first, then view URL, and only then high-resolution thumbnails.
+  // Thumbnail is fallback, not primary source.
   return [
-    `https://drive.google.com/thumbnail?id=${id}&sz=w1600`,
     `https://drive.google.com/uc?export=download&id=${id}`,
     `https://drive.google.com/uc?export=view&id=${id}`,
+    `https://drive.google.com/thumbnail?id=${id}&sz=w3200`,
+    `https://drive.google.com/thumbnail?id=${id}&sz=w1600`,
   ];
 }
 
@@ -503,34 +521,56 @@ async function normalizeImage(bytes, targetWidth, targetHeight) {
   const width = Math.max(1, Math.round(targetWidth));
   const height = Math.max(1, Math.round(targetHeight));
 
-  const resized = await sharp(bytes)
+  // IMAGE QUALITY FIX:
+  // rotate() respects EXIF orientation.
+  // lanczos3 gives better down/up-sampling quality.
+  // PNG keeps line-art/illustrations cleaner than low-quality JPEG.
+  return sharp(bytes)
+      .rotate()
       .resize({
         width,
         height,
         fit: 'contain',
         background: { r: 255, g: 255, b: 255, alpha: 1 },
         withoutEnlargement: false,
+        kernel: sharp.kernel.lanczos3,
       })
       .flatten({ background: '#ffffff' })
-      .png()
+      .png({
+        compressionLevel: 6,
+        adaptiveFiltering: true,
+      })
       .toBuffer()
       .catch(() => bytes);
-
-  return sharp(resized).png().toBuffer().catch(() => resized);
 }
 
 async function drawImageContained(pdfDoc, page, imageUrl, box) {
   if (!imageUrl) return;
+
   try {
     const { bytes } = await fetchImageBytes(imageUrl);
-    const png = await normalizeImage(bytes, box.width, box.height);
+
+    // IMAGE QUALITY FIX:
+    // Render image at 3x pixel density, but draw it into the same PDF box.
+    // This keeps layout unchanged and improves sharpness.
+    const png = await normalizeImage(
+        bytes,
+        box.width * IMAGE_SCALE,
+        box.height * IMAGE_SCALE
+    );
+
     const img = await pdfDoc.embedPng(png);
-    page.drawImage(img, { x: box.x, y: toY(box.bottom), width: box.width, height: box.height });
+
+    page.drawImage(img, {
+      x: box.x,
+      y: toY(box.bottom),
+      width: box.width,
+      height: box.height,
+    });
   } catch (err) {
     console.warn(`Image skipped "${imageUrl}": ${err.message}`);
   }
 }
-
 function overlayPage1(pdfDoc, page, { name, calendarUrl, bold, weekNum }) {
   const colors = WEEK_COLORS[weekNum] || WEEK_COLORS[1];
   const layout = PAGE1_LAYOUT[weekNum] || PAGE1_LAYOUT[1];

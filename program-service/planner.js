@@ -4,172 +4,416 @@ const slotBodyFocus = require('./rules/slot-body-focus');
 const goalFallbacks = require('./rules/goal-fallbacks');
 const levelProgression = require('./rules/level-progression');
 const { spaceMap, equipMap } = require('./rules/space-equipment-maps');
-const { painKeywords, shouldExcludeHighIntensity } = require('./rules/contra-filters');
+const {
+  shouldExcludeHighIntensity,
+  getActiveContraindicationAliases,
+} = require('./rules/contra-filters');
 
 const SESSIONS = ['morning', 'midday', 'afternoon', 'evening'];
+const REQUIRED_MAIN_PER_WEEK = SESSIONS.length;
 
 const MOVEMENT_TYPE_NORM = {
   resistance: 'strength',
   'resistance / strength': 'strength',
+  strength: 'strength',
   'balanced routine': 'mix',
   mix: 'mix',
   'cardio-based': 'cardio',
+  cardio: 'cardio',
   'yoga / pilates': 'mobility',
   'yoga / pilates / dance': 'mobility',
   'yoga/pilates': 'mobility',
+  mobility: 'mobility',
 };
 
-function pickRandom(arr) {
-  if (!arr || arr.length === 0) return null;
-  return arr[Math.floor(Math.random() * arr.length)];
-}
+const MOVEMENT_TYPE_FALLBACKS = {
+  cardio: ['cardio', 'mix', 'mobility'],
+  strength: ['strength', 'mix', 'mobility'],
+  mobility: ['mobility', 'mix'],
+  mix: ['mix', 'mobility', 'strength', 'cardio'],
+};
 
-function mapExerciseImage(ex) {
-  return ex.image_url || ex.imageUrl || ex.image || ex.photo_url || ex.photoUrl || '';
-}
+const BODY_FOCUS_FALLBACKS = {
+  full_body: ['full_body', 'upper_body', 'lower_body'],
+  upper_body: ['upper_body', 'full_body'],
+  lower_body: ['lower_body', 'full_body'],
+};
 
-/**
- * Build a 4-week program_plan from lead profile and NocoDB exercise pool.
- * @param {object} profile
- * @param {object[]} allExercises
- * @returns {object}
- */
+const EXERCISE_TEXT_ALIASES = {
+  progression: ['progression', 'exercise_progression', 'progression_text', 'progressions'],
+  regression: ['regression', 'exercise_regression', 'regression_text', 'regressions'],
+};
+
 function buildProgramPlan(profile, allExercises) {
-  const userMovType = MOVEMENT_TYPE_NORM[profile.movement_type] || profile.movement_type;
+  const normalizedProfile = normalizeProfile(profile);
+  const exercises = normalizeExercises(allExercises);
 
-  const allowedSpaces = spaceMap[profile.space] || ['all'];
-  const allowedEquip = equipMap[profile.equipment] || ['none'];
-  const weekLevels = levelProgression[profile.level] || levelProgression.beginner;
-  const bodyFocusRules = slotBodyFocus[profile.primary_goal]
-    || [['full_body'], ['full_body'], ['full_body'], ['full_body']];
-  const goalFallbackList = goalFallbacks[profile.primary_goal] || [profile.primary_goal];
-  const excludeHighIntensity = shouldExcludeHighIntensity(profile);
+  const allowedSpaces = spaceMap[normalizedProfile.space] || ['all'];
+  const allowedEquipment = equipMap[normalizedProfile.equipment] || ['none'];
+  const weekLevels = levelProgression[normalizedProfile.level] || levelProgression.beginner;
+  const bodyFocusRules = slotBodyFocus[normalizedProfile.primary_goal]
+      || [['full_body'], ['full_body'], ['full_body'], ['full_body']];
+  const fallbackGoals = goalFallbacks[normalizedProfile.primary_goal]
+      || [normalizedProfile.primary_goal];
 
-  const activePainKeywords = (profile.contraindications || [])
-    .filter(c => c !== 'stress')
-    .map(c => painKeywords[c] || c.replace(/_/g, ' '));
+  const excludeHighIntensity = shouldExcludeHighIntensity(normalizedProfile);
+  const activeContraindications = getActiveContraindicationAliases(normalizedProfile);
+  const userMovementType = normalizeMovementType(normalizedProfile.movement_type);
+  const movementFallbacks = resolveMovementFallbacks(userMovementType);
 
-  function matchesContra(ex) {
-    if (activePainKeywords.length === 0) return true;
-    if (!ex.contraindications) return true;
-    const exContra = ex.contraindications.toLowerCase();
-    return !activePainKeywords.some(k => exContra.includes(k));
-  }
+  const warmupPool = exercises.filter(ex =>
+      isWarmupCandidate(ex, allowedSpaces, allowedEquipment, excludeHighIntensity, activeContraindications)
+  );
 
-  function baseFilter(ex, goal, weekLevel) {
-    if (ex.primary_goal !== goal) return false;
-    if (!allowedSpaces.includes(ex.space)) return false;
-    if (!allowedEquip.includes(ex.equipment)) return false;
-    if (!weekLevel.includes(ex.level)) return false;
-    if (!matchesContra(ex)) return false;
-    if (excludeHighIntensity && ex.intensity === 'high') return false;
-    return true;
-  }
-
-  function getWarmupPool() {
-    return allExercises.filter(ex => {
-      if (ex.primary_goal !== 'warmup') return false;
-      if (!allowedSpaces.includes(ex.space)) return false;
-      if (!allowedEquip.includes(ex.equipment)) return false;
-      if (!matchesContra(ex)) return false;
-      if (excludeHighIntensity && ex.intensity === 'high') return false;
-      return true;
-    });
-  }
-
-  function getMainPool(goal, weekLevel, minCount = 4) {
-    if (userMovType && userMovType !== 'mix') {
-      const withType = allExercises.filter(ex => {
-        if (!baseFilter(ex, goal, weekLevel)) return false;
-        const exTypes = (ex.movement_type || '').split(',').map(s => s.trim());
-        return exTypes.includes(userMovType);
-      });
-      if (withType.length >= minCount) return withType;
-    }
-    return allExercises.filter(ex => baseFilter(ex, goal, weekLevel));
+  if (warmupPool.length === 0) {
+    throw new Error('No warmup exercises found after space/equipment/contraindication/intensity filters');
   }
 
   const globalUsedMainIds = new Set();
-  const warmupPool = getWarmupPool();
   const plan = {};
 
-  for (let w = 0; w < 4; w++) {
-    const weekNum = w + 1;
-    const weekLevel = weekLevels[w];
+  for (let weekIndex = 0; weekIndex < 4; weekIndex++) {
+    const weekNumber = weekIndex + 1;
+    const weekLevel = weekLevels[weekIndex] || weekLevels[weekLevels.length - 1];
 
-    let mainPool = [];
-    for (const goal of goalFallbackList) {
-      const pool = getMainPool(goal, weekLevel);
-      const fresh = pool.filter(e => !mainPool.find(m => m.ex_id === e.ex_id));
-      mainPool = [...mainPool, ...fresh];
-      if (mainPool.length >= 4) break;
-    }
+    const baseMainPool = exercises.filter(ex =>
+        isMainCandidate(
+            ex,
+            fallbackGoals,
+            weekLevel,
+            allowedSpaces,
+            allowedEquipment,
+            excludeHighIntensity,
+            activeContraindications
+        )
+    );
 
-    const freshMain = mainPool.filter(e => !globalUsedMainIds.has(e.ex_id));
-    const effectiveMain = freshMain.length >= 4 ? freshMain : mainPool;
+    assertEnoughUnique(baseMainPool, REQUIRED_MAIN_PER_WEEK, `week_${weekNumber}.main`);
+
+    const freshMainPool = baseMainPool.filter(ex => !globalUsedMainIds.has(ex._exerciseKey));
+    const effectiveMainPool = hasEnoughUnique(freshMainPool, REQUIRED_MAIN_PER_WEEK)
+        ? freshMainPool
+        : baseMainPool;
 
     const weekUsedWarmupIds = new Set();
     const weekUsedMainIds = new Set();
     const weekPlan = {};
 
-    for (let s = 0; s < 4; s++) {
-      const warmupCandidates = warmupPool.filter(e => !weekUsedWarmupIds.has(e.ex_id));
-      const wu = pickRandom(warmupCandidates.length > 0 ? warmupCandidates : warmupPool);
-      if (wu) weekUsedWarmupIds.add(wu.ex_id);
+    for (let slotIndex = 0; slotIndex < SESSIONS.length; slotIndex++) {
+      const slot = SESSIONS[slotIndex];
 
-      const slotFocus = bodyFocusRules[s];
-      let mainCandidates = effectiveMain.filter(e =>
-        !weekUsedMainIds.has(e.ex_id) && slotFocus.includes(e.body_focus)
-      );
-      if (mainCandidates.length === 0) {
-        mainCandidates = effectiveMain.filter(e => !weekUsedMainIds.has(e.ex_id));
-      }
-      if (mainCandidates.length === 0) {
-        mainCandidates = mainPool;
+      const warmup = pickWarmup(warmupPool, weekUsedWarmupIds);
+      if (warmup) {
+        weekUsedWarmupIds.add(warmup._exerciseKey);
       }
 
-      const mx = pickRandom(mainCandidates);
-      if (mx) {
-        weekUsedMainIds.add(mx.ex_id);
-        globalUsedMainIds.add(mx.ex_id);
+      const slotBodyFocuses = bodyFocusRules[slotIndex] || ['full_body'];
+
+      const main = pickMainExercise({
+        pool: effectiveMainPool,
+        usedIds: weekUsedMainIds,
+        fallbackGoals,
+        movementFallbacks,
+        slotBodyFocuses,
+      });
+
+      if (!main) {
+        throw new Error(`Cannot select unique main exercise for week_${weekNumber}.${slot}`);
       }
 
-      weekPlan[SESSIONS[s]] = {
-        warmup: wu ? {
-          ex_id: wu.ex_id,
-          name: wu.name,
-          description: wu.description,
-          body_focus: wu.body_focus,
-          level: wu.level,
-          intensity: wu.intensity,
-          movement_type: wu.movement_type,
-          image_url: mapExerciseImage(wu),
-          cues: wu.cues,
-          progression: wu.progression || '',
-          regression: wu.regression || '',
-        } : null,
-        main: mx ? {
-          ex_id: mx.ex_id,
-          name: mx.name,
-          description: mx.description,
-          body_focus: mx.body_focus,
-          level: mx.level,
-          intensity: mx.intensity,
-          movement_type: mx.movement_type,
-          primary_goal: mx.primary_goal,
-          image_url: mapExerciseImage(mx),
-          cues: mx.cues,
-          progression: mx.progression || '',
-          regression: mx.regression || '',
-        } : null,
+      weekUsedMainIds.add(main._exerciseKey);
+      globalUsedMainIds.add(main._exerciseKey);
+
+      weekPlan[slot] = {
+        warmup: warmup ? mapExercise(warmup, false) : null,
+        main: mapExercise(main, true),
       };
     }
 
-    plan[`week_${weekNum}`] = weekPlan;
+    plan[`week_${weekNumber}`] = weekPlan;
   }
 
   return plan;
 }
 
-module.exports = { buildProgramPlan };
+function isWarmupCandidate(ex, allowedSpaces, allowedEquipment, excludeHighIntensity, activeContraindications) {
+  return (
+      ex.primary_goal === 'warmup' &&
+      allowedSpaces.includes(ex.space) &&
+      allowedEquipment.includes(ex.equipment) &&
+      matchesContraindications(ex, activeContraindications) &&
+      matchesIntensity(ex, excludeHighIntensity)
+  );
+}
 
+function isMainCandidate(
+    ex,
+    fallbackGoals,
+    weekLevel,
+    allowedSpaces,
+    allowedEquipment,
+    excludeHighIntensity,
+    activeContraindications
+) {
+  return (
+      fallbackGoals.includes(ex.primary_goal) &&
+      allowedSpaces.includes(ex.space) &&
+      allowedEquipment.includes(ex.equipment) &&
+      weekLevel.includes(ex.level) &&
+      matchesContraindications(ex, activeContraindications) &&
+      matchesIntensity(ex, excludeHighIntensity)
+  );
+}
+
+function pickWarmup(warmupPool, usedIds) {
+  const unused = warmupPool.filter(ex => !usedIds.has(ex._exerciseKey));
+  return pickRandom(unused.length > 0 ? unused : warmupPool);
+}
+
+function pickMainExercise({ pool, usedIds, fallbackGoals, movementFallbacks, slotBodyFocuses }) {
+  const unusedPool = pool.filter(ex => !usedIds.has(ex._exerciseKey));
+
+  if (unusedPool.length === 0) {
+    return null;
+  }
+
+  const bodyFocusFallbacks = resolveBodyFocusFallbacks(slotBodyFocuses);
+
+  const selectionTiers = buildSelectionTiers(fallbackGoals, movementFallbacks, bodyFocusFallbacks);
+
+  for (const tier of selectionTiers) {
+    const candidates = unusedPool.filter(ex =>
+        tier.goals.includes(ex.primary_goal) &&
+        tier.movementTypes.some(type => parseMovementTypes(ex.movement_type).includes(type)) &&
+        tier.bodyFocuses.includes(ex.body_focus)
+    );
+
+    if (candidates.length > 0) {
+      return pickRandom(candidates);
+    }
+  }
+
+  return pickRandom(unusedPool);
+}
+
+function buildSelectionTiers(fallbackGoals, movementFallbacks, bodyFocusFallbacks) {
+  const exactGoal = fallbackGoals.slice(0, 1);
+  const compatibleGoals = fallbackGoals;
+
+  const exactMovement = movementFallbacks.slice(0, 1);
+  const compatibleMovement = movementFallbacks;
+
+  const exactBodyFocus = bodyFocusFallbacks.slice(0, 1);
+  const compatibleBodyFocus = bodyFocusFallbacks;
+
+  return [
+    {
+      goals: exactGoal,
+      movementTypes: exactMovement,
+      bodyFocuses: exactBodyFocus,
+    },
+    {
+      goals: exactGoal,
+      movementTypes: exactMovement,
+      bodyFocuses: compatibleBodyFocus,
+    },
+    {
+      goals: compatibleGoals,
+      movementTypes: exactMovement,
+      bodyFocuses: compatibleBodyFocus,
+    },
+    {
+      goals: compatibleGoals,
+      movementTypes: compatibleMovement,
+      bodyFocuses: compatibleBodyFocus,
+    },
+    {
+      goals: compatibleGoals,
+      movementTypes: compatibleMovement,
+      bodyFocuses: ['full_body', 'upper_body', 'lower_body'],
+    },
+  ];
+}
+
+function resolveMovementFallbacks(movementType) {
+  if (!movementType) {
+    return ['mix', 'mobility', 'strength', 'cardio'];
+  }
+
+  return MOVEMENT_TYPE_FALLBACKS[movementType] || [movementType];
+}
+
+function resolveBodyFocusFallbacks(slotBodyFocuses) {
+  const result = [];
+
+  for (const bodyFocus of slotBodyFocuses) {
+    const values = BODY_FOCUS_FALLBACKS[bodyFocus] || [bodyFocus];
+
+    for (const value of values) {
+      if (!result.includes(value)) {
+        result.push(value);
+      }
+    }
+  }
+
+  return result;
+}
+
+function normalizeProfile(profile) {
+  if (!profile || typeof profile !== 'object') {
+    return {};
+  }
+
+  return {
+    ...profile,
+    contraindications: Array.isArray(profile.contraindications) ? profile.contraindications : [],
+  };
+}
+
+function normalizeExercises(allExercises) {
+  if (!Array.isArray(allExercises)) {
+    return [];
+  }
+
+  return allExercises
+      .filter(ex => ex && typeof ex === 'object')
+      .map((ex, index) => ({
+        ...ex,
+        ex_id: safeString(ex.ex_id || ex.id || ex.Id || ex.ID || `exercise_${index}`),
+        primary_goal: normalizeCode(ex.primary_goal),
+        space: normalizeCode(ex.space),
+        equipment: normalizeCode(ex.equipment),
+        level: normalizeCode(ex.level),
+        body_focus: normalizeCode(ex.body_focus),
+        intensity: normalizeCode(ex.intensity),
+        movement_type: normalizeMovementTypeList(ex.movement_type),
+        _exerciseKey: safeString(ex.ex_id || ex.id || ex.Id || ex.ID || ex.name || `exercise_${index}`),
+      }));
+}
+
+function normalizeCode(value) {
+  return safeString(value).trim().toLowerCase();
+}
+
+function normalizeMovementType(value) {
+  const normalized = normalizeCode(value);
+  return MOVEMENT_TYPE_NORM[normalized] || normalized;
+}
+
+function normalizeMovementTypeList(value) {
+  return parseMovementTypes(value)
+      .map(type => MOVEMENT_TYPE_NORM[type] || type)
+      .join(',');
+}
+
+function parseMovementTypes(value) {
+  return safeString(value)
+      .split(',')
+      .map(item => normalizeCode(item))
+      .filter(Boolean);
+}
+
+function matchesContraindications(ex, activeContraindications) {
+  if (activeContraindications.length === 0) {
+    return true;
+  }
+
+  const exerciseContraindications = safeString(ex.contraindications).toLowerCase();
+
+  if (!exerciseContraindications) {
+    return true;
+  }
+
+  return !activeContraindications.some(contraindication =>
+      exerciseContraindications.includes(contraindication)
+  );
+}
+
+function matchesIntensity(ex, excludeHighIntensity) {
+  return !excludeHighIntensity || ex.intensity !== 'high';
+}
+
+function hasEnoughUnique(pool, requiredCount) {
+  return new Set(pool.map(ex => ex._exerciseKey)).size >= requiredCount;
+}
+
+function assertEnoughUnique(pool, requiredCount, context) {
+  const uniqueCount = new Set(pool.map(ex => ex._exerciseKey)).size;
+
+  if (uniqueCount < requiredCount) {
+    throw new Error(`${context}: expected at least ${requiredCount} unique exercises after filters, got ${uniqueCount}`);
+  }
+}
+
+function pickRandom(arr) {
+  if (!arr || arr.length === 0) {
+    return null;
+  }
+
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function mapExercise(ex, includePrimaryGoal) {
+  const result = {
+    ex_id: safeString(ex.ex_id),
+    name: safeString(ex.name),
+    description: safeString(ex.description),
+    body_focus: safeString(ex.body_focus),
+    level: safeString(ex.level),
+    intensity: safeString(ex.intensity),
+    movement_type: safeString(ex.movement_type),
+    image_url: mapExerciseImage(ex),
+    cues: safeString(ex.cues),
+    progression: resolveExerciseText(ex, 'progression'),
+    regression: resolveExerciseText(ex, 'regression'),
+  };
+
+  if (includePrimaryGoal) {
+    result.primary_goal = safeString(ex.primary_goal);
+  }
+
+  return result;
+}
+
+function mapExerciseImage(ex) {
+  return safeString(ex.image_url || ex.imageUrl || ex.image || ex.photo_url || ex.photoUrl);
+}
+
+function mapLowercaseKeys(obj) {
+  const out = {};
+
+  for (const [key, value] of Object.entries(obj || {})) {
+    out[String(key).toLowerCase()] = value;
+  }
+
+  return out;
+}
+
+function resolveExerciseText(ex, field) {
+  const aliases = EXERCISE_TEXT_ALIASES[field] || [field];
+  const byLowerKey = mapLowercaseKeys(ex);
+
+  for (const alias of aliases) {
+    const value = byLowerKey[String(alias).toLowerCase()];
+
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+
+      if (trimmed) {
+        return trimmed;
+      }
+    }
+  }
+
+  return '';
+}
+
+function safeString(value) {
+  if (value == null) {
+    return '';
+  }
+
+  return String(value);
+}
+
+module.exports = { buildProgramPlan };

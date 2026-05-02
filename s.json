@@ -2,55 +2,34 @@
   "week_1": {
     "midday": {
       "main": {
-        "cues": "Feet straight, light breath, small range.",
-        "name": "Standing Tandem Stance Shifts",
-        "ex_id": "E354",
+        "cues": "Rotate through the ribs. Hips steady. Control the return",
+        "name": "Split Stance + Chop",
+        "ex_id": "E361",
         "level": "beginner",
-        "image_url": "https://drive.google.com/file/d/1IxWHGPXjPpMH-3zNwb6d63-9b01h38D6/view?usp=drive_link",
+        "image_url": "https://drive.google.com/file/d/10ATzpuQnD3Z_9QHE-ZgTUw1u-QLmuuSx/view?usp=drive_link",
         "intensity": "low",
-        "body_focus": "lower_body",
-        "description": "Heel-to-toe stance → shift weight forward and back → maintain balance. 1. Stand with one foot directly in front of the other (straight line). The heel of the front foot touches the toes of the back foot. 2. Slowly shift weight forward, pressure moves from back foot → front foot. 3. Shift weight backward. 4. Switch foot positions.",
+        "body_focus": "upper_body",
+        "regression": "Small torso rotations. Feet closer for more balance.",
+        "description": "Split stance → chop diagonally across the body → control the core and return. 1. Split stance, feet hip-width apart (not on a tight line). 2. Shift body weight forward onto the front leg. Clasp hands together and raised above shoulder height. 3. Move the hands diagonally down across the body toward the opposite hip. Rotation comes from the upper body. 4. Slowly bring hands back to the starting position. 5. Repeat and switch legs.",
+        "progression": "Add light load (0.5L bottles of water). Perform with a deeper split stance.",
         "primary_goal": "core",
-        "movement_type": "balance,activation"
+        "movement_type": "balance,anti_rotation"
       },
       "warmup": {
-        "cues": "Tall spine, quiet foot, hips level.",
-        "name": "Weight-Shift to Single-Leg Hover",
-        "ex_id": "W63",
-        "level": "beginner",
-        "image_url": "https://drive.google.com/file/d/1QlEQ78Fgo84zdD5BWKU7IdWSIfzEj953/view?usp=drive_link",
+        "cues": "Crown tall, ribs down; Reach long, don’t shrug.",
+        "name": "Standing Reach Forward",
+        "ex_id": "W36",
+        "level": "intermediate",
+        "image_url": "https://drive.google.com/file/d/1R2XK1NxfIqBdFU20h0GRA4bCK3ucW7xt/view?usp=drive_link",
         "intensity": "low",
-        "body_focus": "lower_body",
-        "description": "Shift weight → lift the other foot → balance. 1. Stand tall, feet hip-width apart. 2. Slowly shift body weight onto the right leg, slow and intentional. 3. Once fully loaded, gently lift the left foot just off the floor, knee slightly bent. 4. Hold 3 sec. 5. Reset and switch legs.",
-        "movement_type": "activation,balance"
+        "body_focus": "upper_body",
+        "regression": "Hands on ribs only.",
+        "description": "Stand tall → reach both arms forward. 1. Stand tall with feet hip-width apart, knees soft.2.  As you inhale (4 sec), reach both arms forward and up in a smooth arc. Palms face inward. 2 Reset. As you exhale (4 sec), let the ribs soften down, shoulders to relax. Arms may float slightly down or stay overhead. 3. Return to neutral and repeat.",
+        "progression": "Add heel raise with exhale reach. Add gentle torso rotation.",
+        "movement_type": "breathing,activation"
       }
     },
     "evening": {
-      "main": {
-        "cues": "Tall spine, hips square, exhale into slow stretch. \n",
-        "name": "Standing Hamstring Sweep",
-        "ex_id": "E97",
-        "level": "beginner",
-        "image_url": "https://drive.google.com/file/d/1rnuBbmmErzoMseJN8FixjHh2xrzpn5pr/view?usp=drive_link",
-        "intensity": "low",
-        "body_focus": "lower_body",
-        "description": "Step forward → sweep the hands toward the toes → return. 1. Stand with feet hip-width apart, spine long. 2. Step your right foot forward, heel stays on the ground, toes pulled upward, front knee straight. 3. Push your hips back and gently hinge forward over the front leg, keep the back straight. 4. Sweep the arms down toward the toes in a smooth motion. 5. Return to standing and reset. 6. Switch.",
-        "primary_goal": "destress",
-        "movement_type": "mobility,balance"
-      },
-      "warmup": {
-        "cues": "Bounce from the ankles, small jumps. ",
-        "name": "Dynamic Ankle Jumps",
-        "ex_id": "W67",
-        "level": "intermediate",
-        "image_url": "https://drive.google.com/file/d/1fSo-FoUWNv6bnlq0JFVe9VLANF79rTSZ/view?usp=drive_link",
-        "intensity": "low",
-        "body_focus": "lower_body",
-        "description": "Quick ankle bounce → small jumps → stay light on the feet. 1. Stand tall, feet hip-width apart, knees soft. Core lightly braced. 2. Rise onto the balls of your feet and perform small, quick jumps using mainly the ankles. Keep the knees only slightly bent and the torso upright. Land softly on the balls of the feet, maintain a light, rhythmic bouncing motion.",
-        "movement_type": "activation,balance"
-      }
-    },
-    "morning": {
       "main": {
         "cues": "Elbows back and down. Open the chest. Core braced.",
         "name": "Neck–Shoulder Stretch",
@@ -59,122 +38,53 @@
         "image_url": "https://drive.google.com/file/d/1VhH65TuFmivPRmCNzHZkbAH7wta-N7i-/view?usp=drive_link",
         "intensity": "low",
         "body_focus": "upper_body",
+        "regression": "Perform without head movement, focus only on elbows.",
         "description": "Hands at forehead → open the elbows → squeeze the shoulder blades. 1. Stand or sit tall. Place your hands lightly in front of the forehead, palms facing outward. 2. Inhale, begin to pull the elbows down and back. Rotate the palms outward as the chest opens. 3. Exhale while squeezing the shoulder blades together and gently drawing the head straight back. 4. Neck long and shoulders away from the ears. 5. Hold 5 sec. 6. Return & repeat.",
+        "progression": "Add gentle chest lift. Perform against wall for stricter posture alignment.",
         "primary_goal": "posture",
         "movement_type": "activation,mobility"
       },
       "warmup": {
-        "cues": "Long spine, knee tracks, gentle depth.",
-        "name": "Standing Figure-4 Hip Opener",
-        "ex_id": "W10",
-        "level": "advanced",
-        "image_url": "https://drive.google.com/file/d/1LrU91i_QSxYuLiL-Pc12ztLN3uXRiz_z/view?usp=drive_link",
+        "cues": "Hips back, shins vertical, neutral spine.",
+        "name": "Hip Hinge Pattern",
+        "ex_id": "W20",
+        "level": "beginner",
+        "image_url": "https://drive.google.com/file/d/17GMa2HEaDNOLjQk6-BkpOkif9VkK14Z0/view?usp=drive_link",
         "intensity": "low",
         "body_focus": "lower_body",
-        "description": "Cross the ankle → sit back into the hip → stay tall and balanced. 1. Stand tall with feet hip-width apart and engage your core. 2. Shift your weight onto one leg. Lift your opposite leg and cross the ankle over the knee, creating a “figure-4” shape. 3. Sit your hips back, like a mini single-leg squat, while keeping your spine long. 4. Hold the top of the shin or keep hands in prayer position for balance. 5. Reset and switch legs.",
-        "movement_type": "mobility,balance"
-      }
-    },
-    "afternoon": {
-      "main": {
-        "cues": "No jaw clench, neck long, blades down/back. ",
-        "name": "Chin Tucks + Scapula Squeezes",
-        "ex_id": "E96",
-        "level": "beginner",
-        "image_url": "https://drive.google.com/file/d/17HMfe2p1Et1ysLIoGgIrGWdkhRajH-5X/view?usp=drive_link",
-        "intensity": "low",
-        "body_focus": "upper_body",
-        "description": "Tuck the chin back → squeeze the shoulder blades → stand tall. 1. Stand tall, feet hip-width, spine long. 2. Perform a chin tuck (NOT a chin down), gently pull your head straight back, as if making a double-chin. 3. While maintaining the chin tuck. Pull your shoulder blades inward and slightly downward. Think: “put shoulder blades in your back pockets”. 4. Hold 1 sec & reset. 5. Repeat.",
-        "primary_goal": "destress",
-        "movement_type": "activation,posture"
-      },
-      "warmup": {
-        "cues": "Neck long, ribs stacked, no shrug.",
-        "name": "Arms Circles",
-        "ex_id": "W54",
-        "level": "intermediate",
-        "image_url": "https://drive.google.com/file/d/1tN3zPZE50MBxTogBBkCCGxwXT7QKFyoO/view?usp=drive_link",
-        "intensity": "low",
-        "body_focus": "upper_body",
-        "description": "Arms out → make small circles → keep shoulders relaxed. 1. Stand tall, feet hip-width apart, draw shoulder blades down and slightly back. 2. Lift arms to the side at about shoulder height (or slightly lower if needed). 3. Make small, slow circles with the arms, shoulder blades, stay quiet and stable. 4. Reset and reverse the motion.",
-        "movement_type": "activation,mobility"
-      }
-    }
-  },
-  "week_2": {
-    "midday": {
-      "main": {
-        "cues": "Slow roll. Tall posture. Reach without arching.",
-        "name": "Heel to Toe Roll + Reach",
-        "ex_id": "E366",
-        "level": "beginner",
-        "image_url": "https://drive.google.com/file/d/1_yLNOvHsXwGmFl6hZ7gyF28Yw5q6R3w9/view?usp=drive_link",
-        "intensity": "low",
-        "body_focus": "lower_body",
-        "description": "Rise onto toes → reach arms forward → lower with control. 1. Stand tall, feet hip-width apart. Arms relaxed at sides. 2. Shift weight slightly forward. Lift heels and rise onto the balls of the feet. 3. As you rise, reach both arms forward and slightly upward (to shoulder or overhead height). 4. Bring arms back down as you return to neutral. 5. Repeat.",
-        "primary_goal": "core",
-        "movement_type": "balance,activation"
-      },
-      "warmup": {
-        "cues": "Neck long, ribs down, low effort.",
-        "name": "Chin Tucks + Scapula Squeezes",
-        "ex_id": "W35",
-        "level": "beginner",
-        "image_url": "https://drive.google.com/file/d/1olcFDEuIMABezS_LHU3DhzI2ANCKvG83/view?usp=drive_link",
-        "intensity": "low",
-        "body_focus": "upper_body",
-        "description": " Tuck the chin back → squeeze the shoulder blades. 1. Stand tall with your spine neutral. Gently draw your head straight back (like making a double chin). Keep the chin parallel to the floor, not tilted down. 2. Scapular Squeeze. With the chin tucked, pull your shoulder blades back and slightly down. Imagine pinching a small object between your shoulder blades. 3. Hold 3 sec. 4. Reset and repeat.",
-        "movement_type": "activation,mobility"
-      }
-    },
-    "evening": {
-      "main": {
-        "cues": "Rotate through the ribs. Hips steady. Control the return",
-        "name": "Split Stance + Chop",
-        "ex_id": "E361",
-        "level": "beginner",
-        "image_url": "https://drive.google.com/file/d/10ATzpuQnD3Z_9QHE-ZgTUw1u-QLmuuSx/view?usp=drive_link",
-        "intensity": "low",
-        "body_focus": "upper_body",
-        "description": "Split stance → chop diagonally across the body → control the core and return. 1. Split stance, feet hip-width apart (not on a tight line). 2. Shift body weight forward onto the front leg. Clasp hands together and raised above shoulder height. 3. Move the hands diagonally down across the body toward the opposite hip. Rotation comes from the upper body. 4. Slowly bring hands back to the starting position. 5. Repeat and switch legs.",
-        "primary_goal": "core",
-        "movement_type": "balance,anti_rotation"
-      },
-      "warmup": {
-        "cues": "Hips back, shins near vertical, ribs down.",
-        "name": "Hamstring Scoop",
-        "ex_id": "W53",
-        "level": "intermediate",
-        "image_url": "https://drive.google.com/file/d/1SyXkhb6HBXBdEFSNJ6AI3r8wRELxGFbR/view?usp=drive_link",
-        "intensity": "low",
-        "body_focus": "lower_body",
-        "description": "Step forward → toes up → scoop the floor. 1. Stand tall, feet hip-width apart, knees soft. 2. Step the right foot forward, placing the heel on the floor with toes lifted, the front leg straight. 3. Reach both hands down and forward, making a scooping motion toward the toes. 4. Return to standing. 5. Repeat on the other leg.",
-        "movement_type": "patterning,mobility"
+        "regression": "Hands to shins, micro-bend knees.",
+        "description": "Push the hips back → keep the spine long → return tall. 1. Stand tall with feet hip-width apart, knees soft, spine long. 2. Exhale slowly through the mouth. Push your hips back, knees bend softly. Spine stays long as you hinge forward. Head and neck relax. 3. Inhale deeply through the nose. Press through your feet. Drive the hips forward, stand tall and long. 4. Repeat.",
+        "progression": "Add an arm reach forward during the hinge.",
+        "movement_type": "mobility,breathing"
       }
     },
     "morning": {
       "main": {
-        "cues": "Hips square. Control the center, no weight shift.",
-        "name": "Single Leg Toe-Tap Matrix",
-        "ex_id": "E362",
+        "cues": "Tall spine, hips square, exhale into slow stretch. \n",
+        "name": "Standing Hamstring Sweep",
+        "ex_id": "E97",
         "level": "beginner",
-        "image_url": "https://drive.google.com/file/d/18L61W2O54E8Zpo7noAsJNlwXR6aiM0dG/view?usp=drive_link",
+        "image_url": "https://drive.google.com/file/d/1rnuBbmmErzoMseJN8FixjHh2xrzpn5pr/view?usp=drive_link",
         "intensity": "low",
         "body_focus": "lower_body",
-        "description": "Balance on one leg → tap the free foot in different directions → stay stable. 1. Stand tall on the left leg, knee softly bent. Hands on hips or out to sides. 2. Using the right foot, lightly tap the floor in different directions: 12 o’clock, 3 and 6  o’clock. Stance knee stays aligned over toes. Slow and controlled. 3. Repeat and switch sides.",
-        "primary_goal": "core",
-        "movement_type": "balance,coordination"
+        "regression": "Smaller sweep, hold support.",
+        "description": "Step forward → sweep the hands toward the toes → return. 1. Stand with feet hip-width apart, spine long. 2. Step your right foot forward, heel stays on the ground, toes pulled upward, front knee straight. 3. Push your hips back and gently hinge forward over the front leg, keep the back straight. 4. Sweep the arms down toward the toes in a smooth motion. 5. Return to standing and reset. 6. Switch.",
+        "progression": "Pause 2 seconds in the hinged position.",
+        "primary_goal": "destress",
+        "movement_type": "mobility,balance"
       },
       "warmup": {
-        "cues": "Rotation comes from the thoracic (chest) spine, not the lower back.",
-        "name": "Standing T-Spine Rotation",
-        "ex_id": "W72",
-        "level": "advanced",
-        "image_url": "https://drive.google.com/file/d/1g2MVUaFiQKgCd99SYFxBRAIo-fZI7Jtl/view?usp=drive_link",
+        "cues": "Heel heavy, knee tracks toes, smooth pulses.",
+        "name": "Split Stance Ankle Pulses",
+        "ex_id": "W49",
+        "level": "beginner",
+        "image_url": "https://drive.google.com/file/d/1uW7KDKGZ4mN-Xzx62T3xxlQaiqs7lqS_/view?usp=drive_link",
         "intensity": "low",
-        "body_focus": "upper_body",
-        "description": "Rotate through ribs → keep hips quiet. 1. Stand tall, feet shoulder-width apart. Arms extended out to the sides at shoulder height, forming a T. 2. Rotate your torso to the right, arms stay wide and level, chest turns with the arms. 3. Slowly rotate back to center. 4. Rotate to the left. 5. Continue alternating.",
-        "movement_type": "activation,balance"
+        "body_focus": "lower_body",
+        "regression": "Reduce depth and hold support.",
+        "description": "Front knee forward → heel stays down → small ankle pulses. 1. Standing in split stance, one foot forward, one foot back. Toes pointing straight forward. 2. Slowly drive the front knee forward. Knee tracks over the 2nd–3rd toe. Stop just before heel lifts. 3. Move back slightly. 4. Reset & repeat. 5. Switch legs.",
+        "progression": "Perform pulses and then step back to standing, repeating rhythmically.",
+        "movement_type": "mobility,activation"
       }
     },
     "afternoon": {
@@ -186,36 +96,11 @@
         "image_url": "https://drive.google.com/file/d/1gi2GOEgZ0M6T9x_imhkzPM1wutpe0QHQ/view?usp=drive_link",
         "intensity": "low",
         "body_focus": "upper_body",
+        "regression": "Shorter holds. Hands on a wall for balance.",
         "description": "Half-kneeling stance → brace the core → stay tall and stable. 1. Kneel on the left knee. Right foot forward, flat on the floor. Hips square, torso upright. 2. Take a slow inhale through the nose, as you exhale, gently tighten the abdominal wall, imagine preparing for a light punch. Create tension around the entire trunk. Arms relaxed or hands on hips, maintain balance. 3. Hold up to 3 sec. 4.  Reset and repeat. 5. Switch legs.",
+        "progression": "Add overhead reach. Add gentle torso rotation.",
         "primary_goal": "core",
         "movement_type": "balance,activation"
-      },
-      "warmup": {
-        "cues": "One segment at a time. Chin first, head last. Stack slowly.",
-        "name": "Segmented Spine Wave Flow",
-        "ex_id": "W71",
-        "level": "advanced",
-        "image_url": "https://drive.google.com/file/d/1QkqUT-qriz6AXDFteXLu3RuVUbt9oL3R/view?usp=drive_link",
-        "intensity": "low",
-        "body_focus": "upper_body",
-        "description": "Ripple down through the spine → flow forward → rebuild the spine one segment at a time. 1. Stand with feet hip-width apart, knees soft, arms relaxed by sides. 2. Long exhale 8 sec, curl down (flexion wave). Slowly round the upper spine, mid-back, lower back. Let arms hang naturally. 3. Start the inhale. Gently initiate from the pelvis. Stack the spine upward one segment at a time. 4. Reset. 5. Repeat.",
-        "movement_type": "breathing,activation"
-      }
-    }
-  },
-  "week_3": {
-    "midday": {
-      "main": {
-        "cues": "Hips square. Control the center, no weight shift.",
-        "name": "Single Leg Toe-Tap Matrix",
-        "ex_id": "E362",
-        "level": "beginner",
-        "image_url": "https://drive.google.com/file/d/18L61W2O54E8Zpo7noAsJNlwXR6aiM0dG/view?usp=drive_link",
-        "intensity": "low",
-        "body_focus": "lower_body",
-        "description": "Balance on one leg → tap the free foot in different directions → stay stable. 1. Stand tall on the left leg, knee softly bent. Hands on hips or out to sides. 2. Using the right foot, lightly tap the floor in different directions: 12 o’clock, 3 and 6  o’clock. Stance knee stays aligned over toes. Slow and controlled. 3. Repeat and switch sides.",
-        "primary_goal": "core",
-        "movement_type": "balance,coordination"
       },
       "warmup": {
         "cues": "Keep arms relaxed, breathe rhythmically.",
@@ -225,135 +110,70 @@
         "image_url": "https://drive.google.com/file/d/1quIdf75ezTn4AqSlKSjCbyQavTfsGxR5/view?usp=drive_link",
         "intensity": "moderate",
         "body_focus": "full_body",
+        "regression": "Smaller heel lift. Arms swing only to chest height.",
         "description": "Swing arms → rise onto toes → move tall and rhythmic. 1. Stand tall, feet hip-width apart. 2. Calf Raise, press through the balls of the feet, lift the heels off the floor. 3. Swing both arms forward and up or swing them back and forth naturally. 4. Continue rising and lowering in a steady rhythm.",
+        "progression": "Add knee bend to increase rhythm. Add 2*0.5L bottles of water.",
         "movement_type": "mobility"
-      }
-    },
-    "evening": {
-      "main": {
-        "cues": "Hips back. Weight on front leg. Long spine.",
-        "name": "Staggered Stance Hinge",
-        "ex_id": "E367",
-        "level": "beginner",
-        "image_url": "https://drive.google.com/file/d/1Z9P_l7F9GPnwqJXblYxLO1c4hrxwHPvP/view?usp=drive_link",
-        "intensity": "low",
-        "body_focus": "lower_body",
-        "description": "Staggered stance → hinge at the hips → keep the spine long. 1. Stand with right foot forward, left foot back. Back foot on toes, 70% of weight on the front leg. Arms hanging naturally or hands on hips 2. Hinge. Push hips straight back, maintain neutral spine. Front knee softly bent. 3. Brace the core, maintain hinge position 3 sec. Feel load in the front glute and hamstring. 4. Return to tall standing and repeat. 5. Switch legs.",
-        "primary_goal": "core",
-        "movement_type": "anti_flexion,activation"
-      },
-      "warmup": {
-        "cues": "Long spine, knee tracks, gentle depth.",
-        "name": "Standing Figure-4 Hip Opener",
-        "ex_id": "W10",
-        "level": "advanced",
-        "image_url": "https://drive.google.com/file/d/1LrU91i_QSxYuLiL-Pc12ztLN3uXRiz_z/view?usp=drive_link",
-        "intensity": "low",
-        "body_focus": "lower_body",
-        "description": "Cross the ankle → sit back into the hip → stay tall and balanced. 1. Stand tall with feet hip-width apart and engage your core. 2. Shift your weight onto one leg. Lift your opposite leg and cross the ankle over the knee, creating a “figure-4” shape. 3. Sit your hips back, like a mini single-leg squat, while keeping your spine long. 4. Hold the top of the shin or keep hands in prayer position for balance. 5. Reset and switch legs.",
-        "movement_type": "mobility,balance"
-      }
-    },
-    "morning": {
-      "main": {
-        "cues": "Slow roll. Tall posture. Reach without arching.",
-        "name": "Heel to Toe Roll + Reach",
-        "ex_id": "E366",
-        "level": "beginner",
-        "image_url": "https://drive.google.com/file/d/1_yLNOvHsXwGmFl6hZ7gyF28Yw5q6R3w9/view?usp=drive_link",
-        "intensity": "low",
-        "body_focus": "lower_body",
-        "description": "Rise onto toes → reach arms forward → lower with control. 1. Stand tall, feet hip-width apart. Arms relaxed at sides. 2. Shift weight slightly forward. Lift heels and rise onto the balls of the feet. 3. As you rise, reach both arms forward and slightly upward (to shoulder or overhead height). 4. Bring arms back down as you return to neutral. 5. Repeat.",
-        "primary_goal": "core",
-        "movement_type": "balance,activation"
-      },
-      "warmup": {
-        "cues": "Hips back, shins near vertical, ribs down.",
-        "name": "Hamstring Scoop",
-        "ex_id": "W53",
-        "level": "intermediate",
-        "image_url": "https://drive.google.com/file/d/1SyXkhb6HBXBdEFSNJ6AI3r8wRELxGFbR/view?usp=drive_link",
-        "intensity": "low",
-        "body_focus": "lower_body",
-        "description": "Step forward → toes up → scoop the floor. 1. Stand tall, feet hip-width apart, knees soft. 2. Step the right foot forward, placing the heel on the floor with toes lifted, the front leg straight. 3. Reach both hands down and forward, making a scooping motion toward the toes. 4. Return to standing. 5. Repeat on the other leg.",
-        "movement_type": "patterning,mobility"
-      }
-    },
-    "afternoon": {
-      "main": {
-        "cues": "Rotate through the ribs. Hips steady. Control the return",
-        "name": "Split Stance + Chop",
-        "ex_id": "E361",
-        "level": "beginner",
-        "image_url": "https://drive.google.com/file/d/10ATzpuQnD3Z_9QHE-ZgTUw1u-QLmuuSx/view?usp=drive_link",
-        "intensity": "low",
-        "body_focus": "upper_body",
-        "description": "Split stance → chop diagonally across the body → control the core and return. 1. Split stance, feet hip-width apart (not on a tight line). 2. Shift body weight forward onto the front leg. Clasp hands together and raised above shoulder height. 3. Move the hands diagonally down across the body toward the opposite hip. Rotation comes from the upper body. 4. Slowly bring hands back to the starting position. 5. Repeat and switch legs.",
-        "primary_goal": "core",
-        "movement_type": "balance,anti_rotation"
-      },
-      "warmup": {
-        "cues": "Head leads down, pelvis leads up, breathe slow.",
-        "name": "Segmented Spine Wave Flow",
-        "ex_id": "W56",
-        "level": "advanced",
-        "image_url": "https://drive.google.com/file/d/1tWgQ4kHH-9v-cjMVx7cFKNN392JAkf9O/view?usp=drive_link",
-        "intensity": "low",
-        "body_focus": "upper_body",
-        "description": "Ripple down through the spine → flow forward → rebuild the spine one segment at a time. 1. Stand with feet hip-width apart, knees soft, arms relaxed by sides. 2. Long exhale 8 sec, curl down (flexion wave). Slowly round the upper spine, mid-back, lower back. Let arms hang naturally. 3. Start the inhale. Gently initiate from the pelvis. Stack the spine upward one segment at a time. 4. Reset. 5. Repeat.",
-        "movement_type": "mobility,patterning"
       }
     }
   },
-  "week_4": {
+  "week_2": {
     "midday": {
       "main": {
-        "cues": "Slow roll. Tall posture. Reach without arching.",
-        "name": "Heel to Toe Roll + Reach",
-        "ex_id": "E366",
-        "level": "beginner",
-        "image_url": "https://drive.google.com/file/d/1_yLNOvHsXwGmFl6hZ7gyF28Yw5q6R3w9/view?usp=drive_link",
+        "cues": "Lengthen back of neck, move slow, no pinching.",
+        "name": "Neck Articular Rotations",
+        "ex_id": "E112",
+        "level": "intermediate",
+        "image_url": "https://drive.google.com/file/d/1BA_lLgh-m3hM2tzK7aN2EWn3b6CP52Fs/view?usp=drive_link",
         "intensity": "low",
-        "body_focus": "lower_body",
-        "description": "Rise onto toes → reach arms forward → lower with control. 1. Stand tall, feet hip-width apart. Arms relaxed at sides. 2. Shift weight slightly forward. Lift heels and rise onto the balls of the feet. 3. As you rise, reach both arms forward and slightly upward (to shoulder or overhead height). 4. Bring arms back down as you return to neutral. 5. Repeat.",
-        "primary_goal": "core",
-        "movement_type": "balance,activation"
+        "body_focus": "upper_body",
+        "regression": "Half-circles only. Reduce range, perform seated.",
+        "description": "Draw a slow circle with your nose → move smoothly. 1. Head centered, eyes forward. 2. Flexion (chin down). 3. Side bend. 4. Extension (look up). 5. Complete the full circle smoothly.",
+        "progression": "Add gentle chin-tuck between rolls.",
+        "primary_goal": "destress",
+        "movement_type": "mobility,relaxation"
       },
       "warmup": {
-        "cues": "Keep chest lifted and breathe with rhythm.",
-        "name": "March in Place",
-        "ex_id": "W05",
-        "level": "intermediate",
-        "image_url": "https://drive.google.com/file/d/1hSI1NUKDWz277PyAja2_2KGStRRaOboC/view?usp=drive_link",
-        "intensity": "moderate",
+        "cues": "Stay tall. Ribs down. Arms reach up, not back",
+        "name": "High March in Place with Arms Overhead",
+        "ex_id": "W11",
+        "level": "advanced",
+        "image_url": "https://drive.google.com/file/d/18yNbpUUh4Nz8tNs388ARObR6g8P1DvhE/view?usp=drive_link",
+        "intensity": "low",
         "body_focus": "full_body",
-        "description": "Walk without moving forward. 1. Stand tall, feet hip-width apart. 2. Lift the right knee to a comfortable height (shin roughly vertical). 3. Let arms swing naturally opposite the legs (right knee → left arm forward). 4. Reset 5. Continue alternating in a smooth rhythm. ",
-        "movement_type": "activation"
+        "regression": "March without overhead reach.",
+        "description": "Arms overhead → drive the knee high → stay tall and controlled. 1. Stand tall with feet hip-width apart, core lightly engaged. Both arms extended overhead. 2. Lift your right knee up to hip height (marching action). Keep arms overhead and steady. 3. Lower & Alternate.",
+        "progression": "Pause 2 seconds at the top. Add small arm pulses overhead.",
+        "movement_type": "activation,coordination"
       }
     },
     "evening": {
       "main": {
-        "cues": "Hips square, ribs stacked, eyes forward.",
-        "name": "Half-Kneeling Bracing",
-        "ex_id": "E353",
+        "cues": "No jaw clench, neck long, blades down/back. ",
+        "name": "Chin Tucks + Scapula Squeezes",
+        "ex_id": "E96",
         "level": "beginner",
-        "image_url": "https://drive.google.com/file/d/1gi2GOEgZ0M6T9x_imhkzPM1wutpe0QHQ/view?usp=drive_link",
+        "image_url": "https://drive.google.com/file/d/17HMfe2p1Et1ysLIoGgIrGWdkhRajH-5X/view?usp=drive_link",
         "intensity": "low",
         "body_focus": "upper_body",
-        "description": "Half-kneeling stance → brace the core → stay tall and stable. 1. Kneel on the left knee. Right foot forward, flat on the floor. Hips square, torso upright. 2. Take a slow inhale through the nose, as you exhale, gently tighten the abdominal wall, imagine preparing for a light punch. Create tension around the entire trunk. Arms relaxed or hands on hips, maintain balance. 3. Hold up to 3 sec. 4.  Reset and repeat. 5. Switch legs.",
-        "primary_goal": "core",
-        "movement_type": "balance,activation"
+        "regression": "Perform lying supine.",
+        "description": "Tuck the chin back → squeeze the shoulder blades → stand tall. 1. Stand tall, feet hip-width, spine long. 2. Perform a chin tuck (NOT a chin down), gently pull your head straight back, as if making a double-chin. 3. While maintaining the chin tuck. Pull your shoulder blades inward and slightly downward. Think: “put shoulder blades in your back pockets”. 4. Hold 1 sec & reset. 5. Repeat.",
+        "progression": "Add 2s isometric holds.",
+        "primary_goal": "destress",
+        "movement_type": "activation,posture"
       },
       "warmup": {
-        "cues": "Relax shoulders, gentle rhythm, quiet feet.",
-        "name": "Dynamic Ankle Bounce",
-        "ex_id": "W08",
-        "level": "advanced",
-        "image_url": "https://drive.google.com/file/d/1xeAYqRjr3ZGVyFkSVH8b1Yo-uNm-I7pQ/view?usp=drive_link",
+        "cues": "Bounce from the ankles, small jumps. ",
+        "name": "Dynamic Ankle Jumps",
+        "ex_id": "W67",
+        "level": "intermediate",
+        "image_url": "https://drive.google.com/file/d/1fSo-FoUWNv6bnlq0JFVe9VLANF79rTSZ/view?usp=drive_link",
         "intensity": "low",
         "body_focus": "lower_body",
-        "description": "Stay tall → bounce lightly through the ankles → quick and elastic. 1. Stand upright, feet hip-width apart. 2. Rise onto the ball of the one foot. 3. Quickly switch. The weight alternates rapidly from one ankle to the other. Small, quick bounces, stay light and springy. Relaxed upper body.\n\n\n",
-        "movement_type": "activation,mobility"
+        "regression": "Ankle bounces without leaving the floor.",
+        "description": "Quick ankle bounce → small jumps → stay light on the feet. 1. Stand tall, feet hip-width apart, knees soft. Core lightly braced. 2. Rise onto the balls of your feet and perform small, quick jumps using mainly the ankles. Keep the knees only slightly bent and the torso upright. Land softly on the balls of the feet, maintain a light, rhythmic bouncing motion.",
+        "progression": "Add forward or lateral ankle hops.",
+        "movement_type": "activation,balance"
       }
     },
     "morning": {
@@ -365,34 +185,40 @@
         "image_url": "https://drive.google.com/file/d/1rnuBbmmErzoMseJN8FixjHh2xrzpn5pr/view?usp=drive_link",
         "intensity": "low",
         "body_focus": "lower_body",
+        "regression": "Smaller sweep, hold support.",
         "description": "Step forward → sweep the hands toward the toes → return. 1. Stand with feet hip-width apart, spine long. 2. Step your right foot forward, heel stays on the ground, toes pulled upward, front knee straight. 3. Push your hips back and gently hinge forward over the front leg, keep the back straight. 4. Sweep the arms down toward the toes in a smooth motion. 5. Return to standing and reset. 6. Switch.",
+        "progression": "Pause 2 seconds in the hinged position.",
         "primary_goal": "destress",
         "movement_type": "mobility,balance"
       },
       "warmup": {
-        "cues": "Bounce from the ankles, small jumps. ",
-        "name": "Dynamic Ankle Jumps",
-        "ex_id": "W67",
-        "level": "intermediate",
-        "image_url": "https://drive.google.com/file/d/1fSo-FoUWNv6bnlq0JFVe9VLANF79rTSZ/view?usp=drive_link",
+        "cues": "Heel heavy, knee tracks toes, smooth pulses.",
+        "name": "Split Stance Ankle Pulses",
+        "ex_id": "W49",
+        "level": "beginner",
+        "image_url": "https://drive.google.com/file/d/1uW7KDKGZ4mN-Xzx62T3xxlQaiqs7lqS_/view?usp=drive_link",
         "intensity": "low",
         "body_focus": "lower_body",
-        "description": "Quick ankle bounce → small jumps → stay light on the feet. 1. Stand tall, feet hip-width apart, knees soft. Core lightly braced. 2. Rise onto the balls of your feet and perform small, quick jumps using mainly the ankles. Keep the knees only slightly bent and the torso upright. Land softly on the balls of the feet, maintain a light, rhythmic bouncing motion.",
-        "movement_type": "activation,balance"
+        "regression": "Reduce depth and hold support.",
+        "description": "Front knee forward → heel stays down → small ankle pulses. 1. Standing in split stance, one foot forward, one foot back. Toes pointing straight forward. 2. Slowly drive the front knee forward. Knee tracks over the 2nd–3rd toe. Stop just before heel lifts. 3. Move back slightly. 4. Reset & repeat. 5. Switch legs.",
+        "progression": "Perform pulses and then step back to standing, repeating rhythmically.",
+        "movement_type": "mobility,activation"
       }
     },
     "afternoon": {
       "main": {
-        "cues": "Rotate through the ribs. Hips steady. Control the return",
-        "name": "Split Stance + Chop",
-        "ex_id": "E361",
-        "level": "beginner",
-        "image_url": "https://drive.google.com/file/d/10ATzpuQnD3Z_9QHE-ZgTUw1u-QLmuuSx/view?usp=drive_link",
+        "cues": "Glute on, ribs down. Reach long, not back. Soft neck.",
+        "name": "Hip Flexor Release + Arm Reach ",
+        "ex_id": "E126",
+        "level": "intermediate",
+        "image_url": "https://drive.google.com/file/d/1e7lpYbiEXJTfkf_KsehzazqL_FPggafc/view?usp=drive_link",
         "intensity": "low",
-        "body_focus": "upper_body",
-        "description": "Split stance → chop diagonally across the body → control the core and return. 1. Split stance, feet hip-width apart (not on a tight line). 2. Shift body weight forward onto the front leg. Clasp hands together and raised above shoulder height. 3. Move the hands diagonally down across the body toward the opposite hip. Rotation comes from the upper body. 4. Slowly bring hands back to the starting position. 5. Repeat and switch legs.",
-        "primary_goal": "core",
-        "movement_type": "balance,anti_rotation"
+        "body_focus": "lower_body",
+        "regression": "Shorter stance.",
+        "description": "Step into split stance → open the front of the hip → reach the arm up and lengthen. 1. Stand in a split stance, perform a gentle Posterior Pelvic Tilt. Tuck your pelvis backward, pull pubic bone forward. Back knee soft, not locked, no arching back. 2. Gently shift weight forward, feel a stretch through the front of the back hip. 4. Reach the arm (same side as the back leg) overhead. 5. Hold 3 sec, lower your arm and reset. 6. Repeat some side and switch.",
+        "progression": "Add gentle side bend away from back leg.",
+        "primary_goal": "destress",
+        "movement_type": "mobility,activation"
       },
       "warmup": {
         "cues": "Lengthen back of neck, move slow, no pinching.",
@@ -402,8 +228,246 @@
         "image_url": "https://drive.google.com/file/d/1BA_lLgh-m3hM2tzK7aN2EWn3b6CP52Fs/view?usp=drive_link",
         "intensity": "low",
         "body_focus": "upper_body",
+        "regression": "Reduce range, perform seated.",
         "description": "Draw a slow circle with your nose → move smoothly. 1. Head centered, eyes forward. 2. Flexion (chin down). 3. Side bend. 4. Extension (look up). 5. Complete the full circle smoothly.",
+        "progression": "Add gentle chin-tuck between rolls.",
         "movement_type": "mobility,relaxation"
+      }
+    }
+  },
+  "week_3": {
+    "midday": {
+      "main": {
+        "cues": "Lengthen back of neck, move slow, no pinching.",
+        "name": "Neck Articular Rotations",
+        "ex_id": "E112",
+        "level": "intermediate",
+        "image_url": "https://drive.google.com/file/d/1BA_lLgh-m3hM2tzK7aN2EWn3b6CP52Fs/view?usp=drive_link",
+        "intensity": "low",
+        "body_focus": "upper_body",
+        "regression": "Half-circles only. Reduce range, perform seated.",
+        "description": "Draw a slow circle with your nose → move smoothly. 1. Head centered, eyes forward. 2. Flexion (chin down). 3. Side bend. 4. Extension (look up). 5. Complete the full circle smoothly.",
+        "progression": "Add gentle chin-tuck between rolls.",
+        "primary_goal": "destress",
+        "movement_type": "mobility,relaxation"
+      },
+      "warmup": {
+        "cues": "Tall spine, quiet foot, hips level.",
+        "name": "Weight-Shift to Single-Leg Hover",
+        "ex_id": "W63",
+        "level": "beginner",
+        "image_url": "https://drive.google.com/file/d/1QlEQ78Fgo84zdD5BWKU7IdWSIfzEj953/view?usp=drive_link",
+        "intensity": "low",
+        "body_focus": "lower_body",
+        "regression": "Toe tap instead of hover. Light fingertip support.",
+        "description": "Shift weight → lift the other foot → balance. 1. Stand tall, feet hip-width apart. 2. Slowly shift body weight onto the right leg, slow and intentional. 3. Once fully loaded, gently lift the left foot just off the floor, knee slightly bent. 4. Hold 3 sec. 5. Reset and switch legs.",
+        "progression": "Eyes closed. Add arm reach overhead.",
+        "movement_type": "activation,balance"
+      }
+    },
+    "evening": {
+      "main": {
+        "cues": "Grow tall, rotate over stable hips, exhale end-range.",
+        "name": "Standing Thoracic Rotation",
+        "ex_id": "E204",
+        "level": "intermediate",
+        "image_url": "https://drive.google.com/file/d/1cmnK4qWqHwhlPU3sV_QmyrptM8r3Flsa/view?usp=drive_link",
+        "intensity": "moderate",
+        "body_focus": "upper_body",
+        "regression": "Less press. Reduce rotation range.",
+        "description": "Stand tall → rotate through the ribs → return to center and switch. 1. Stand tall with feet hip-width apart, bring hands together at chest height. Palms flat against each other. 2. While maintaining palm pressure, slowly rotate the chest and shoulders to the left. Hips stay facing forward. 4. Rotate back to neutral with control. 5. Alternate.",
+        "progression": "Add split-stance version.",
+        "primary_goal": "posture",
+        "movement_type": "isometric,rotation"
+      },
+      "warmup": {
+        "cues": "Heel heavy, knee tracks toes, smooth pulses.",
+        "name": "Split Stance Ankle Pulses",
+        "ex_id": "W49",
+        "level": "beginner",
+        "image_url": "https://drive.google.com/file/d/1uW7KDKGZ4mN-Xzx62T3xxlQaiqs7lqS_/view?usp=drive_link",
+        "intensity": "low",
+        "body_focus": "lower_body",
+        "regression": "Reduce depth and hold support.",
+        "description": "Front knee forward → heel stays down → small ankle pulses. 1. Standing in split stance, one foot forward, one foot back. Toes pointing straight forward. 2. Slowly drive the front knee forward. Knee tracks over the 2nd–3rd toe. Stop just before heel lifts. 3. Move back slightly. 4. Reset & repeat. 5. Switch legs.",
+        "progression": "Perform pulses and then step back to standing, repeating rhythmically.",
+        "movement_type": "mobility,activation"
+      }
+    },
+    "morning": {
+      "main": {
+        "cues": "Hips back, ribs quiet, front foot does the work.",
+        "name": "One Leg Stance Hip Hinge & Reach",
+        "ex_id": "E190",
+        "level": "intermediate",
+        "image_url": "https://drive.google.com/file/d/1P7df1Qemi68RcgesHFBL86zJNCboKDqm/view?usp=drive_link",
+        "intensity": "moderate",
+        "body_focus": "lower_body",
+        "regression": "Shorter hinge range. Use wall support.",
+        "description": "Balance on one leg → hinge forward → reach long and return. 1. Stand tall, place your left foot forward (working leg). Step the right foot slightly back (30 cm). 80% of weight stays on the front foot. 2. Push hips straight back. The torso inclines forward as one unit. 3. Reach both arms forward. 4. Reset, arms back, hip forward. 5. Repeat. 6. Switch legs.",
+        "progression": "Add 2*0.5L bottles of water. Single-arm reach.",
+        "primary_goal": "posture",
+        "movement_type": "hinge,activation"
+      },
+      "warmup": {
+        "cues": "Heel stays down. Knee tracks over middle toes. Small pulses.",
+        "name": "Split Stance Ankle Pulses",
+        "ex_id": "W74",
+        "level": "advanced",
+        "image_url": "https://drive.google.com/file/d/1cUm7t6b5DPJUa6VDWJOCz5uMptlumI1g/view?usp=drive_link",
+        "intensity": "low",
+        "body_focus": "lower_body",
+        "regression": "Reduce depth and hold support.",
+        "description": "Front knee forward → heel stays down → small ankle pulses. 1. Standing in split stance, one foot forward, one foot back. Toes pointing straight forward. 2. Slowly drive the front knee forward. Knee tracks over the 2nd–3rd toe. Stop just before heel lifts. 3. Move back slightly. 4. Reset & repeat. 5. Switch legs.",
+        "progression": "Perform pulses and then step back to standing, repeating rhythmically.",
+        "movement_type": "activation,posture"
+      }
+    },
+    "afternoon": {
+      "main": {
+        "cues": "Glute on, ribs down. Reach long, not back. Soft neck.",
+        "name": "Hip Flexor Release + Arm Reach ",
+        "ex_id": "E126",
+        "level": "intermediate",
+        "image_url": "https://drive.google.com/file/d/1e7lpYbiEXJTfkf_KsehzazqL_FPggafc/view?usp=drive_link",
+        "intensity": "low",
+        "body_focus": "lower_body",
+        "regression": "Shorter stance.",
+        "description": "Step into split stance → open the front of the hip → reach the arm up and lengthen. 1. Stand in a split stance, perform a gentle Posterior Pelvic Tilt. Tuck your pelvis backward, pull pubic bone forward. Back knee soft, not locked, no arching back. 2. Gently shift weight forward, feel a stretch through the front of the back hip. 4. Reach the arm (same side as the back leg) overhead. 5. Hold 3 sec, lower your arm and reset. 6. Repeat some side and switch.",
+        "progression": "Add gentle side bend away from back leg.",
+        "primary_goal": "destress",
+        "movement_type": "mobility,activation"
+      },
+      "warmup": {
+        "cues": "Move slow. Stay tall. Control the circle.",
+        "name": "Waist Circles",
+        "ex_id": "W70",
+        "level": "intermediate",
+        "image_url": "https://drive.google.com/file/d/1sT6WWtSYsAnezIRfSPxVldQP0g11WiqH/view?usp=drive_link",
+        "intensity": "low",
+        "body_focus": "upper_body",
+        "regression": "Smaller circles. Hold chair for support.",
+        "description": "Stand tall → circle the hips → move smoothly around. 1. Stand tall, feet hip-width apart. Hands on hips, light core brace, relax shoulders. 2. Slowly shift your body weight (torso), forward, to the right, backward, to the left. Connect these shifts into a smooth circle. 3. Reverse direction.",
+        "progression": "Perform eyes closed (advanced balance). Arms overhead.",
+        "movement_type": "balance,coordination"
+      }
+    }
+  },
+  "week_4": {
+    "midday": {
+      "main": {
+        "cues": "Move slow, rest in neutral. Let breath lead the movement.\n",
+        "name": "Segmented Spine Wave Flow",
+        "ex_id": "E150",
+        "level": "advanced",
+        "image_url": "https://drive.google.com/file/d/1YSKzlJtdHTmX12QqX2f2f3mljIJmLsBm/view?usp=drive_link",
+        "intensity": "low",
+        "body_focus": "upper_body",
+        "regression": "Smaller waves.",
+        "description": "Ripple down through the spine → flow forward → rebuild the spine one segment at a time. 1. Stand with feet hip-width apart, knees soft, arms relaxed by sides. 2. Long exhale 8 sec, curl down (flexion wave). Slowly round the upper spine, mid-back, lower back. Let arms hang naturally. 3. Start the inhale. Gently initiate from the pelvis. Stack the spine upward one segment at a time. 4. Reset. 5. Repeat.\n",
+        "progression": "Add arm sweep at the end of the flexion.",
+        "primary_goal": "destress",
+        "movement_type": "mobility,breathing"
+      },
+      "warmup": {
+        "cues": "Tall posture. Soft step. Reach long.",
+        "name": "Step Back + Arm Reach & Clap",
+        "ex_id": "W73",
+        "level": "advanced",
+        "image_url": "https://drive.google.com/file/d/1XwA1BEX_aSNJfKWcZJji9gQuc4hsY24H/view?usp=drive_link",
+        "intensity": "low",
+        "body_focus": "full_body",
+        "regression": "Smaller step. No clap (just reach).",
+        "description": "Step back → reach forward → clap → return tall. 1. Stand tall, hands on hips, feet hip-width apart. 2. Step the right foot back and slight bend the right knee. Torso remains upright. 3. Lift both arms forward, reach to shoulder height, clap hands in front of the chest. 4. Bring arms back down, step forward to center. 5. Switch legs.",
+        "progression": "Add slight knee bend (mini lunge).",
+        "movement_type": "mobility,activation"
+      }
+    },
+    "evening": {
+      "main": {
+        "cues": "Lengthen back of neck, move slow, no pinching.",
+        "name": "Neck Articular Rotations",
+        "ex_id": "E112",
+        "level": "intermediate",
+        "image_url": "https://drive.google.com/file/d/1BA_lLgh-m3hM2tzK7aN2EWn3b6CP52Fs/view?usp=drive_link",
+        "intensity": "low",
+        "body_focus": "upper_body",
+        "regression": "Half-circles only. Reduce range, perform seated.",
+        "description": "Draw a slow circle with your nose → move smoothly. 1. Head centered, eyes forward. 2. Flexion (chin down). 3. Side bend. 4. Extension (look up). 5. Complete the full circle smoothly.",
+        "progression": "Add gentle chin-tuck between rolls.",
+        "primary_goal": "destress",
+        "movement_type": "mobility,relaxation"
+      },
+      "warmup": {
+        "cues": "Tall spine, quiet foot, hips level.",
+        "name": "Weight-Shift to Single-Leg Hover",
+        "ex_id": "W63",
+        "level": "beginner",
+        "image_url": "https://drive.google.com/file/d/1QlEQ78Fgo84zdD5BWKU7IdWSIfzEj953/view?usp=drive_link",
+        "intensity": "low",
+        "body_focus": "lower_body",
+        "regression": "Toe tap instead of hover. Light fingertip support.",
+        "description": "Shift weight → lift the other foot → balance. 1. Stand tall, feet hip-width apart. 2. Slowly shift body weight onto the right leg, slow and intentional. 3. Once fully loaded, gently lift the left foot just off the floor, knee slightly bent. 4. Hold 3 sec. 5. Reset and switch legs.",
+        "progression": "Eyes closed. Add arm reach overhead.",
+        "movement_type": "activation,balance"
+      }
+    },
+    "morning": {
+      "main": {
+        "cues": "Long neck, no lumbar pinch, breathe low. During the breath cycles. ",
+        "name": "Sphinx Pose",
+        "ex_id": "E142",
+        "level": "advanced",
+        "image_url": "https://drive.google.com/file/d/1RvJLVEQ7cy_x_vvHoLn-dNy4DvNV6WWN/view",
+        "intensity": "low",
+        "body_focus": "upper_body",
+        "regression": "Forehead on hands.",
+        "description": "Prop on forearms → lift the chest → open the front of the body. 1. Lie on your stomach. Legs extended behind you. Feet relaxed. 2. Place forearms on the floor, elbows under shoulders, lift the upper chest. 3. Lift through the chest (NOT the lower back). 4. Take a 4 sec nasal inhale, expand the upper chest. 5. Slow mouth exhale 6 sec. 6. During the breath cycles, stay tall through the sternum.",
+        "progression": "Push through the hands and extend the elbows into a Cobra/Press-Up.",
+        "primary_goal": "destress",
+        "movement_type": "breathing,posture"
+      },
+      "warmup": {
+        "cues": "Long spine, knee tracks, gentle depth.",
+        "name": "Standing Figure-4 Hip Opener",
+        "ex_id": "W10",
+        "level": "advanced",
+        "image_url": "https://drive.google.com/file/d/1LrU91i_QSxYuLiL-Pc12ztLN3uXRiz_z/view?usp=drive_link",
+        "intensity": "low",
+        "body_focus": "lower_body",
+        "regression": "Hold to support for balance.",
+        "description": "Cross the ankle → sit back into the hip → stay tall and balanced. 1. Stand tall with feet hip-width apart and engage your core. 2. Shift your weight onto one leg. Lift your opposite leg and cross the ankle over the knee, creating a “figure-4” shape. 3. Sit your hips back, like a mini single-leg squat, while keeping your spine long. 4. Hold the top of the shin or keep hands in prayer position for balance. 5. Reset and switch legs.",
+        "progression": "Add reach-forward counterbalance.",
+        "movement_type": "mobility,balance"
+      }
+    },
+    "afternoon": {
+      "main": {
+        "cues": "Glute on, ribs down. Reach long, not back. Soft neck.",
+        "name": "Hip Flexor Release + Arm Reach ",
+        "ex_id": "E126",
+        "level": "intermediate",
+        "image_url": "https://drive.google.com/file/d/1e7lpYbiEXJTfkf_KsehzazqL_FPggafc/view?usp=drive_link",
+        "intensity": "low",
+        "body_focus": "lower_body",
+        "regression": "Shorter stance.",
+        "description": "Step into split stance → open the front of the hip → reach the arm up and lengthen. 1. Stand in a split stance, perform a gentle Posterior Pelvic Tilt. Tuck your pelvis backward, pull pubic bone forward. Back knee soft, not locked, no arching back. 2. Gently shift weight forward, feel a stretch through the front of the back hip. 4. Reach the arm (same side as the back leg) overhead. 5. Hold 3 sec, lower your arm and reset. 6. Repeat some side and switch.",
+        "progression": "Add gentle side bend away from back leg.",
+        "primary_goal": "destress",
+        "movement_type": "mobility,activation"
+      },
+      "warmup": {
+        "cues": "One segment at a time. Chin first, head last. Stack slowly.",
+        "name": "Segmented Spine Wave Flow",
+        "ex_id": "W71",
+        "level": "advanced",
+        "image_url": "https://drive.google.com/file/d/1QkqUT-qriz6AXDFteXLu3RuVUbt9oL3R/view?usp=drive_link",
+        "intensity": "low",
+        "body_focus": "upper_body",
+        "regression": "Smaller range. Seated version.",
+        "description": "Ripple down through the spine → flow forward → rebuild the spine one segment at a time. 1. Stand with feet hip-width apart, knees soft, arms relaxed by sides. 2. Long exhale 8 sec, curl down (flexion wave). Slowly round the upper spine, mid-back, lower back. Let arms hang naturally. 3. Start the inhale. Gently initiate from the pelvis. Stack the spine upward one segment at a time. 4. Reset. 5. Repeat.",
+        "progression": "Arms overhead on return.",
+        "movement_type": "breathing,activation"
       }
     }
   }
